@@ -16,7 +16,7 @@
 A Statamic addon that integrates Shopify with Statamic CMS. Use Shopify for world-class ecommerce while building your storefront with Antlers.
 
 [Live Demo](https://statamic-shopify-demostore.vercel.app) —
-[Documentation](https://statamic-shopify-docs.vercel.app) —
+[Documentation](https://docs.tc/shopify) —
 [Issues](https://github.com/thoughtco/shopify/issues) —
 [Discussions](https://github.com/thoughtco/shopify/discussions)
 <!-- /statamic:hide -->
@@ -61,7 +61,7 @@ php artisan vendor:publish --tag=shopify-scripts
 
 ## Documentation
 
-Full documentation on configuration, webhooks, Antlers tags, multi-store setup, and more is available at [statamic-shopify-docs.vercel.app](https://statamic-shopify-docs.vercel.app).
+Full documentation on configuration, webhooks, Antlers tags, multi-store setup, and more is available at [docs.tc/shopify](https://docs.tc/shopify). The source lives in [`docs/`](docs).
 
 ## Issues & Feedback
 

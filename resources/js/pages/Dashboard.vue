@@ -61,6 +61,6 @@ const shopifyIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 109.5 
         <ui-description class="mt-4">You might be missing one of the following:</ui-description>
         <ui-description class="mt-2">1. Have you updated your `env` variables?<br />2. Have you published the assets?</ui-description>
 
-        <ui-description class="mt-4">If not, ensure you've ran through the <a href="https://statamic-shopify-docs.vercel.app/setup">Quickstart</a> guide on the documentation.</ui-description>
+        <ui-description class="mt-4">If not, ensure you've ran through the <a href="https://docs.tc/shopify/9x/overview/getting-started/setup">Quickstart</a> guide on the documentation.</ui-description>
     </template>
 </template>

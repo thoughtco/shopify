@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # to trigger the docs workflow
 
 jobs:
   build:
@@ -96,3 +97,9 @@ jobs:
           git add CHANGELOG.md
           git commit -m "Update changelog for $TAG"
           git push origin HEAD:"${{ github.ref_name }}"
+
+      # Releases created with GITHUB_TOKEN don't fire release events, so start the docs sync directly
+      - name: Publish docs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run docs.yml --ref "${{ github.ref_name }}" -f ref="$TAG"
