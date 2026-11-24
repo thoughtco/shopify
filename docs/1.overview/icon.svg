@@ -1,0 +1,12 @@
+<svg class="group" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="50px" height="50px">
+    <path
+        d="M20,5v13c0,0.552-0.448,1-1,1H5c-0.552,0-1-0.448-1-1V5C2.895,5,2,5.895,2,7v11c0,1.657,1.343,3,3,3h14c1.657,0,3-1.343,3-3	V7C22,5.895,21.105,5,20,5z" class="transition-colors duration-300 group-hover:fill-primary dark:fill-white" :class="{ 'fill-primary dark:fill-primary!' : reveal == $el.closest('.menu-container').id }"/>
+    <path
+        d="M14.854,3c-1.136,0-2.175,0.642-2.683,1.658L12,5l-0.171-0.342C11.321,3.642,10.282,3,9.146,3H6	C4.895,3,4,3.895,4,5v13c0,0.552,0.448,1,1,1h14c0.552,0,1-0.448,1-1V5c0-1.105-0.895-2-2-2H14.854z"
+        opacity=".35"
+        class="transition-all duration-300 group-hover:fill-primary/80 dark:fill-white dark:group-hover:opacity-100 dark:group-hover:fill-white" :class="{ 'fill-primary dark:opacity-100' : reveal == $el.closest('.menu-container').id }" />
+    <path d="M12,22c1.657,0,3-1.343,3-3H9C9,20.657,10.343,22,12,22z" class="transition-colors duration-300 group-hover:fill-primary dark:fill-white" :class="{ 'fill-primary dark:fill-primary!' : reveal == $el.closest('.menu-container').id }"/>
+    <path
+        d="M15,15v-3c0-0.552,0.448-1,1-1h0c0.552,0,1,0.448,1,1v3c0,0.552-0.448,1-1,1h0C15.448,16,15,15.552,15,15z" class="transition-colors duration-300 group-hover:fill-primary dark:fill-white" :class="{ 'fill-primary dark:fill-primary!' : reveal == $el.closest('.menu-container').id }"/>
+    <circle cx="16" cy="7.5" r="1.5" class="transition-colors duration-300 group-hover:fill-primary dark:fill-white" :class="{ 'fill-primary dark:fill-primary!' : reveal == $el.closest('.menu-container').id }"/>
+</svg>
