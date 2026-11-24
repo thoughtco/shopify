@@ -74,5 +74,14 @@ Route::name('shopify.')
 
                 Route::post('product/update', [Webhooks\ProductCreateUpdateController::class, 'update'])
                     ->name('webhook.product.update');
+
+                Route::post('selling-plan-group/create', [Webhooks\SellingPlanGroupController::class, 'create'])
+                    ->name('webhook.selling_plan_group.create');
+
+                Route::post('selling-plan-group/update', [Webhooks\SellingPlanGroupController::class, 'update'])
+                    ->name('webhook.selling_plan_group.update');
+
+                Route::post('selling-plan-group/delete', [Webhooks\SellingPlanGroupController::class, 'delete'])
+                    ->name('webhook.selling_plan_group.delete');
             });
     });

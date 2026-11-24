@@ -2,6 +2,8 @@
 
 namespace Thoughtco\Shopify\Enums;
 
+use Thoughtco\Shopify\Support\SellingPlans;
+
 enum WebhookTopic: string
 {
     case ProductsCreate = 'PRODUCTS_CREATE';
@@ -17,6 +19,28 @@ enum WebhookTopic: string
     case CollectionsCreate = 'COLLECTIONS_CREATE';
     case CollectionsUpdate = 'COLLECTIONS_UPDATE';
     case CollectionsDelete = 'COLLECTIONS_DELETE';
+    case SellingPlanGroupsCreate = 'SELLING_PLAN_GROUPS_CREATE';
+    case SellingPlanGroupsUpdate = 'SELLING_PLAN_GROUPS_UPDATE';
+    case SellingPlanGroupsDelete = 'SELLING_PLAN_GROUPS_DELETE';
+
+    /**
+     * The topics to subscribe to: selling plan topics need the read_purchase_options
+     * scope, so are only subscribed to when selling plans are imported.
+     *
+     * @return array<self>
+     */
+    public static function registered(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $topic) => $topic->isRegistered()));
+    }
+
+    public function isRegistered(): bool
+    {
+        return match ($this) {
+            self::SellingPlanGroupsCreate, self::SellingPlanGroupsUpdate, self::SellingPlanGroupsDelete => SellingPlans::enabled(),
+            default => true,
+        };
+    }
 
     public function routeName(): string
     {
@@ -34,6 +58,9 @@ enum WebhookTopic: string
             self::CollectionsCreate => 'statamic.shopify.webhook.collection.create',
             self::CollectionsUpdate => 'statamic.shopify.webhook.collection.update',
             self::CollectionsDelete => 'statamic.shopify.webhook.collection.delete',
+            self::SellingPlanGroupsCreate => 'statamic.shopify.webhook.selling_plan_group.create',
+            self::SellingPlanGroupsUpdate => 'statamic.shopify.webhook.selling_plan_group.update',
+            self::SellingPlanGroupsDelete => 'statamic.shopify.webhook.selling_plan_group.delete',
         };
     }
 
