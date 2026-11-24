@@ -38,6 +38,7 @@ class ServiceProvider extends AddonServiceProvider
     protected $fieldtypes = [
         Fieldtypes\Variants::class,
         Fieldtypes\DisabledText::class,
+        Fieldtypes\SellingPlans::class,
     ];
 
     protected $listen = [

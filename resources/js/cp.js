@@ -1,11 +1,13 @@
 import Variants from './fieldtypes/Variants.vue'
 import DisabledText from './fieldtypes/DisabledText.vue'
+import SellingPlans from './fieldtypes/SellingPlans.vue'
 import Dashboard from './pages/Dashboard.vue'
 import Activity from './pages/Activity.vue'
 
 Statamic.booting(() => {
   Statamic.$components.register('variants-fieldtype', Variants)
   Statamic.$components.register('disabled_text-fieldtype', DisabledText)
+  Statamic.$components.register('selling_plans-fieldtype', SellingPlans)
 
   Statamic.$inertia.register('shopify::Dashboard', Dashboard)
   Statamic.$inertia.register('shopify::Activity', Activity)

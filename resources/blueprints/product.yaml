@@ -238,8 +238,8 @@ tabs:
             handle: selling_plan_groups
             field:
               display: 'Selling plans'
-              type: hidden
-              icon: hidden
+              type: selling_plans
+              icon: repeat
               listable: hidden
               visibility: read_only
               hide_display: false
