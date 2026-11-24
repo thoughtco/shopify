@@ -1,41 +1,15 @@
 name: Deploy demo store
+
+# Redeploys https://shopify-demo.docs.tc when a release is published, so the demo
+# runs the latest version (its deploy script updates thoughtco/shopify).
 on:
   release:
     types: [released]
   workflow_dispatch:
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_DEMO_STORE_PROJECT_ID }}
+
 jobs:
-  preview:
+  deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: production
     steps:
-     # Check out master branch
-      - name: Checkout
-        uses: actions/checkout@master
-        with:
-          repository: 'thoughtco/statamic-demo-store'
-
-      # Downloads, configures and caches Node.js
-      - name: Setup node env
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      # Install all dependencies
-      - name: Install dependencies
-        run: yarn
-
-      # Install all dependencies
-      - name: Run vite
-        run: npm run build
-
-      # Pull vercel project info
-      - name: Vercel pull
-        run: yarn vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      # Deploy to vercel
-      - name: Vercel build and deploy
-        run: yarn vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Trigger the Ploi deployment
+        run: curl --fail --silent --show-error -X POST "${{ secrets.DEMO_DEPLOY_WEBHOOK }}"
