@@ -552,6 +552,7 @@ class ImportSingleProductJob implements ShouldQueue
                     inventoryLevels(first: 50) {
                       nodes {
                         location {
+                          fulfillsOnlineOrders
                           address {
                             countryCode
                           }
@@ -639,15 +640,23 @@ class ImportSingleProductJob implements ShouldQueue
     {
         $marketData = [];
 
+        $levels = collect(Arr::get($variant, 'inventoryItem.inventoryLevels.nodes', []))
+            ->map(fn ($node) => [
+                'country' => Arr::get($node, 'location.address.countryCode'),
+                'fulfills_online_orders' => (bool) Arr::get($node, 'location.fulfillsOnlineOrders', true),
+                'quantity' => (int) Arr::get($node, 'quantities.0.quantity', 0),
+            ]);
+
         foreach (array_keys(StoreConfig::getMarkets()) as $countryCode) {
             $alias = 'contextualPricing'.strtoupper($countryCode);
             $price = Arr::get($variant, $alias.'.price.amount');
             $compareAtPrice = Arr::get($variant, $alias.'.compareAtPrice.amount');
 
-            $inventoryNodes = Arr::get($variant, 'inventoryItem.inventoryLevels.nodes', []);
-            $inventoryQuantity = collect($inventoryNodes)
-                ->filter(fn ($node) => Arr::get($node, 'location.address.countryCode') === $countryCode)
-                ->sum(fn ($node) => (int) Arr::get($node, 'quantities.0.quantity', 0));
+            // Stock held in the market's country. When there's none there the market is
+            // supplied from elsewhere (e.g. one warehouse that ships internationally), so
+            // count the locations that fulfil online orders instead.
+            $local = $levels->where('country', $countryCode);
+            $inventoryQuantity = ($local->isNotEmpty() ? $local : $levels->where('fulfills_online_orders', true))->sum('quantity');
 
             $marketData[$countryCode] = [
                 'price' => $price,
