@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
         with:
-          repository: 'statamic-rad-pack/shopify-demo'
+          repository: 'thoughtco/statamic-demo-store'
 
       # Downloads, configures and caches Node.js
       - name: Setup node env
