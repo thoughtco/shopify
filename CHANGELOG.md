@@ -1,5 +1,17 @@
 # Changelog
 
+## v9.0.1 - 2026-11-24
+
+### What's Changed
+* Publish docs to docs.tc by @ryanmitchell in https://github.com/thoughtco/shopify/pull/393
+* Link to www.docs.tc by @ryanmitchell in https://github.com/thoughtco/shopify/pull/394
+* Update the documented requirements by @ryanmitchell in https://github.com/thoughtco/shopify/pull/395
+* Count stock shipped from other countries in markets mode by @ryanmitchell in https://github.com/thoughtco/shopify/pull/396
+* Use the active market in the shopifyProduct component by @ryanmitchell in https://github.com/thoughtco/shopify/pull/397
+
+
+**Full Changelog**: https://github.com/thoughtco/shopify/compare/v9.0.0...v9.0.1
+
 ## v9.0.0 - 2026-11-24
 
 ### What's Changed
