@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use StatamicRadPack\Shopify\Support\ProductSummary;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class ProductSummaryTest extends TestCase
 {

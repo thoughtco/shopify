@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Actions;
+namespace Thoughtco\Shopify\Actions;
 
 class ParseMetafields
 {

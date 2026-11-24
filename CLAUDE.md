@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is **statamic-rad-pack/shopify**, a Statamic addon (Laravel package) that integrates Shopify with Statamic CMS. It uses the Shopify Admin GraphQL API for product imports and webhooks, and the Shopify Storefront API for frontend cart/checkout interactions.
+This is **thoughtco/shopify**, a Statamic addon (Laravel package) that integrates Shopify with Statamic CMS. It uses the Shopify Admin GraphQL API for product imports and webhooks, and the Shopify Storefront API for frontend cart/checkout interactions.
 
 - PHP 8.3/8.4, Laravel 12, Statamic ^6.0
-- Namespace: `StatamicRadPack\Shopify`
-- Packagist: `statamic-rad-pack/shopify`
+- Namespace: `Thoughtco\Shopify`
+- Packagist: `thoughtco/shopify`
 
 ## Commands
 
@@ -37,6 +37,8 @@ php artisan shopify:webhooks:register --prune     # Also remove stale subscripti
 ### Entry Point
 
 `src/ServiceProvider.php` registers all addon components: Artisan commands, fieldtypes, event listeners, routes, query scopes, CP scripts, and Antlers tags. It also initializes the Shopify API client via `Shopify\Context` and binds `Shopify\Clients\Graphql` into the container (with support for both legacy `admin_token` and OAuth `client_credentials` flow).
+
+`Support\LegacyNamespace` (registered first in `ServiceProvider::register()`) aliases old `StatamicRadPack\Shopify\*` class names to `Thoughtco\Shopify\*` on demand, with a deprecation notice. It exists for the 9.x upgrade from `statamic-rad-pack/shopify` and should be removed in the next major version.
 
 ### Enums
 

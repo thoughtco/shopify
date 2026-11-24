@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Support;
+namespace Thoughtco\Shopify\Support;
 
 use Statamic\Fieldtypes\Bard\Augmentor;
 

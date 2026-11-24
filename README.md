@@ -6,9 +6,9 @@
 
 <p>
 
-[![Latest Stable Version](https://poser.pugx.org/statamic-rad-pack/shopify/v)](//packagist.org/packages/statamic-rad-pack/shopify)
-[![Total Downloads](https://poser.pugx.org/statamic-rad-pack/shopify/downloads)](//packagist.org/packages/statamic-rad-pack/shopify)
-[![License](https://poser.pugx.org/statamic-rad-pack/shopify/license)](//packagist.org/packages/statamic-rad-pack/shopify)
+[![Latest Stable Version](https://poser.pugx.org/thoughtco/shopify/v)](//packagist.org/packages/thoughtco/shopify)
+[![Total Downloads](https://poser.pugx.org/thoughtco/shopify/downloads)](//packagist.org/packages/thoughtco/shopify)
+[![License](https://poser.pugx.org/thoughtco/shopify/license)](//packagist.org/packages/thoughtco/shopify)
 
 </p>
 </div>
@@ -17,8 +17,8 @@ A Statamic addon that integrates Shopify with Statamic CMS. Use Shopify for worl
 
 [Live Demo](https://statamic-shopify-demostore.vercel.app) —
 [Documentation](https://statamic-shopify-docs.vercel.app) —
-[Issues](https://github.com/statamic-rad-pack/shopify/issues) —
-[Discussions](https://github.com/statamic-rad-pack/shopify/discussions)
+[Issues](https://github.com/thoughtco/shopify/issues) —
+[Discussions](https://github.com/thoughtco/shopify/discussions)
 <!-- /statamic:hide -->
 
 ## Requirements
@@ -44,7 +44,7 @@ A Statamic addon that integrates Shopify with Statamic CMS. Use Shopify for worl
 Install via Composer:
 
 ```bash
-composer require statamic-rad-pack/shopify
+composer require thoughtco/shopify
 ```
 
 Publish the config file:
@@ -65,6 +65,6 @@ Full documentation on configuration, webhooks, Antlers tags, multi-store setup, 
 
 ## Issues & Feedback
 
-Please open an issue on [GitHub](https://github.com/statamic-rad-pack/shopify/issues) if you encounter a problem.
+Please open an issue on [GitHub](https://github.com/thoughtco/shopify/issues) if you encounter a problem.
 
-To propose a new feature, start a [discussion](https://github.com/statamic-rad-pack/shopify/discussions).
+To propose a new feature, start a [discussion](https://github.com/thoughtco/shopify/discussions).

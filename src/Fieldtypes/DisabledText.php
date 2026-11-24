@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Fieldtypes;
+namespace Thoughtco\Shopify\Fieldtypes;
 
 use Statamic\Fields\Fieldtype;
 

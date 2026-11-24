@@ -1,14 +1,14 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
-use StatamicRadPack\Shopify\Events\ProductImportFailed;
-use StatamicRadPack\Shopify\Jobs\ImportSingleProductJob;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Events\ProductImportFailed;
+use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class ProductImportFailedTest extends TestCase
 {

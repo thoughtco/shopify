@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
-use StatamicRadPack\Shopify\Support\RichTextConverter;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Support\RichTextConverter;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class MetafieldsTest extends TestCase
 {

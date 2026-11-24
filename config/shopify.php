@@ -1,7 +1,7 @@
 <?php
 
-use StatamicRadPack\Shopify\Actions\ParseMetafields;
-use StatamicRadPack\Shopify\Jobs\CreateOrUpdateShopifyUser;
+use Thoughtco\Shopify\Actions\ParseMetafields;
+use Thoughtco\Shopify\Jobs\CreateOrUpdateShopifyUser;
 
 return [
     /**

@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Webhooks;
+namespace Thoughtco\Shopify\Http\Controllers\Webhooks;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Statamic\Http\Controllers\Controller;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Activity\ActivityStatus;
 
 class WebhooksController extends Controller
 {

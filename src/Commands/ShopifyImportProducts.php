@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Commands;
+namespace Thoughtco\Shopify\Commands;
 
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\FetchAllProducts;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\FetchAllProducts;
 
 class ShopifyImportProducts extends Command
 {

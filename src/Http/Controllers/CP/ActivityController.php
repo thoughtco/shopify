@@ -1,18 +1,18 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\CP;
+namespace Thoughtco\Shopify\Http\Controllers\CP;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Statamic\Facades\Data;
 use Statamic\Http\Controllers\CP\CpController;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
-use StatamicRadPack\Shopify\Enums\WebhookTopic;
-use StatamicRadPack\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Enums\WebhookTopic;
+use Thoughtco\Shopify\Support\StoreConfig;
 
 class ActivityController extends CpController
 {

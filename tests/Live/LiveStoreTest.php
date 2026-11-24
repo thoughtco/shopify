@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Live;
+namespace Thoughtco\Shopify\Tests\Live;
 
 use Dotenv\Dotenv;
 use Illuminate\Filesystem\Filesystem;
@@ -10,12 +10,12 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Jobs\ImportCollectionJob;
-use StatamicRadPack\Shopify\Jobs\ImportSingleProductJob;
-use StatamicRadPack\Shopify\Support\WebhookSubscriptions;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Jobs\ImportCollectionJob;
+use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
+use Thoughtco\Shopify\Support\WebhookSubscriptions;
+use Thoughtco\Shopify\Tests\TestCase;
 
 /**
  * Smoke tests against a real (development) Shopify store.

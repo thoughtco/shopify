@@ -9,7 +9,7 @@ export default defineAppConfig({
   },
 
   github: {
-    url: 'https://github.com/statamic-rad-pack/shopify',
+    url: 'https://github.com/thoughtco/shopify',
     branch: 'main',
     rootDir: 'docs',
   },

@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tags;
+namespace Thoughtco\Shopify\Tags;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -17,10 +17,10 @@ use Statamic\Tags\Concerns\QueriesConditions;
 use Statamic\Tags\Concerns\QueriesOrderBys;
 use Statamic\Tags\Concerns\RendersForms;
 use Statamic\Tags\Tags;
-use StatamicRadPack\Shopify\Support\Customers;
-use StatamicRadPack\Shopify\Support\Money;
-use StatamicRadPack\Shopify\Support\ProductSummary;
-use StatamicRadPack\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Support\Customers;
+use Thoughtco\Shopify\Support\Money;
+use Thoughtco\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Support\StoreConfig;
 
 class Shopify extends Tags
 {

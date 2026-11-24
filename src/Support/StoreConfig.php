@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Support;
+namespace Thoughtco\Shopify\Support;
 
 use Illuminate\Support\Facades\Cache;
 use Shopify\App\ShopifyApp;
-use StatamicRadPack\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\Graphql;
 
 class StoreConfig
 {

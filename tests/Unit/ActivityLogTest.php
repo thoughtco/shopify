@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Bus;
@@ -10,13 +10,13 @@ use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
-use StatamicRadPack\Shopify\Jobs\ImportSingleProductJob;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class ActivityLogTest extends TestCase
 {

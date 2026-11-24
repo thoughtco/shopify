@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\UpdateScripts;
+namespace Thoughtco\Shopify\UpdateScripts;
 
 use Statamic\Facades\Collection;
 use Statamic\Facades\YAML;

@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Tests\TestCase;
-use StatamicRadPack\Shopify\Traits\FetchCollections;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Traits\FetchCollections;
 
 class FetchCollectionsTest extends TestCase
 {

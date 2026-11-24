@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Traits;
+namespace Thoughtco\Shopify\Traits;
 
 use Illuminate\Support\Facades\Log;
 use Statamic\Support\Arr;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Exceptions\GraphqlException;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Exceptions\GraphqlException;
 
 trait ThrottlesShopifyRequests
 {

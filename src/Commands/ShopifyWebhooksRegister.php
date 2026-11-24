@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Commands;
+namespace Thoughtco\Shopify\Commands;
 
 use Illuminate\Console\Command;
 use Statamic\Support\Arr;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Enums\WebhookTopic;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Support\WebhookSubscriptions;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Enums\WebhookTopic;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Support\WebhookSubscriptions;
 
 class ShopifyWebhooksRegister extends Command
 {

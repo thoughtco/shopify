@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Traits;
+namespace Thoughtco\Shopify\Traits;
 
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\Graphql;
 
 trait FetchCollections
 {

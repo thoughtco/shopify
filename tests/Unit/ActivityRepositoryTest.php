@@ -1,17 +1,17 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Filesystem\Filesystem;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Activity\DatabaseActivityRepository;
-use StatamicRadPack\Shopify\Activity\FileActivityRepository;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Activity\DatabaseActivityRepository;
+use Thoughtco\Shopify\Activity\FileActivityRepository;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class ActivityRepositoryTest extends TestCase
 {

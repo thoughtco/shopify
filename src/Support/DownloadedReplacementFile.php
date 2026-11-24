@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Support;
+namespace Thoughtco\Shopify\Support;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;

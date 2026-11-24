@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Activity;
+namespace Thoughtco\Shopify\Activity;
 
 enum ActivityStatus: string
 {

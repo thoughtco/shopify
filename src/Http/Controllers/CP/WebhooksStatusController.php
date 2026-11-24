@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\CP;
+namespace Thoughtco\Shopify\Http\Controllers\CP;
 
 use Illuminate\Http\Request;
 use Statamic\Http\Controllers\CP\CpController;
-use StatamicRadPack\Shopify\Enums\WebhookTopic;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Support\WebhookSubscriptions;
+use Thoughtco\Shopify\Enums\WebhookTopic;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Support\WebhookSubscriptions;
 
 class WebhooksStatusController extends CpController
 {

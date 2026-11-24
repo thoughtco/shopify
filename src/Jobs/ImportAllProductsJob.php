@@ -1,14 +1,14 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Jobs;
+namespace Thoughtco\Shopify\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\FetchAllProducts;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\FetchAllProducts;
 
 /**
  * Page through every product id in Shopify and queue an import for each, so the

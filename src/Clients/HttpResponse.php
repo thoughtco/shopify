@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Clients;
+namespace Thoughtco\Shopify\Clients;
 
 use Statamic\Support\Arr;
 

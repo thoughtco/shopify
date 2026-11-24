@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Blueprints;
+namespace Thoughtco\Shopify\Blueprints;
 
 use Statamic\Facades\Blueprint;
 

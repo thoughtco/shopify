@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Traits;
+namespace Thoughtco\Shopify\Traits;
 
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Clients\Graphql;
 
 trait FetchAllProducts
 {

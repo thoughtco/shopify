@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\AssetContainer;
 use Statamic\Facades\Entry;
 use Statamic\Facades\User;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class VariantBlueprintTest extends TestCase
 {

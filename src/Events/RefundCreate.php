@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Events;
+namespace Thoughtco\Shopify\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;

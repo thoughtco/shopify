@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Scopes;
+namespace Thoughtco\Shopify\Scopes;
 
 use Statamic\Query\Scopes\Scope;
 

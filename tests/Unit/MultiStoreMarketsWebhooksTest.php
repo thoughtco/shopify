@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Illuminate\Support\Facades\Bus;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\User;
-use StatamicRadPack\Shopify\Jobs\ImportSingleProductJob;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
+use Thoughtco\Shopify\Tests\TestCase;
 
 /**
  * Markets mode is one Shopify store, so its webhooks are handled as in single-store mode.

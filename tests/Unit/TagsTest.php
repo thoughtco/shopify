@@ -1,14 +1,14 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Tags\Shopify;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Tags\Shopify;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class TagsTest extends TestCase
 {

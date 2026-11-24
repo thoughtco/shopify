@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Support;
+namespace Thoughtco\Shopify\Support;
 
 use Illuminate\Support\Collection;
 use Statamic\Contracts\Entries\Entry as EntryContract;

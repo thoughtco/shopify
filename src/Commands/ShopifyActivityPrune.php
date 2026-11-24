@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Commands;
+namespace Thoughtco\Shopify\Commands;
 
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
 
 class ShopifyActivityPrune extends Command
 {

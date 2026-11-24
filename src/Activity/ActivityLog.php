@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Activity;
+namespace Thoughtco\Shopify\Activity;
 
 use Illuminate\Support\Facades\Log;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
-use StatamicRadPack\Shopify\Jobs\ImportCollectionJob;
-use StatamicRadPack\Shopify\Jobs\ImportSingleProductJob;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Jobs\ImportCollectionJob;
+use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
 use Throwable;
 
 /**

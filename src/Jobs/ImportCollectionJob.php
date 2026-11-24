@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Jobs;
+namespace Thoughtco\Shopify\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,11 +10,11 @@ use Statamic\Facades\Site;
 use Statamic\Facades\Term;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\SavesImagesAndMetafields;
-use StatamicRadPack\Shopify\Traits\ThrottlesShopifyRequests;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\SavesImagesAndMetafields;
+use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 use Throwable;
 
 class ImportCollectionJob implements ShouldQueue

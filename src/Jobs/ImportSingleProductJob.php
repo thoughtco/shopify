@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Jobs;
+namespace Thoughtco\Shopify\Jobs;
 
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -18,15 +18,15 @@ use Statamic\Facades\Term;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 use Statamic\Support\Traits\Hookable;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Events\ProductImportFailed;
-use StatamicRadPack\Shopify\Exceptions\GraphqlException;
-use StatamicRadPack\Shopify\Support\ProductSummary;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\SavesImagesAndMetafields;
-use StatamicRadPack\Shopify\Traits\ThrottlesShopifyRequests;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Events\ProductImportFailed;
+use Thoughtco\Shopify\Exceptions\GraphqlException;
+use Thoughtco\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\SavesImagesAndMetafields;
+use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 use Throwable;
 
 class ImportSingleProductJob implements ShouldQueue

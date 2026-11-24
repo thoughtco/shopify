@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\CP;
+namespace Thoughtco\Shopify\Http\Controllers\CP;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Statamic\Http\Controllers\CP\CpController;
-use StatamicRadPack\Shopify\Jobs;
+use Thoughtco\Shopify\Jobs;
 
 class ImportCollectionsController extends CpController
 {

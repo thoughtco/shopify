@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Webhooks;
+namespace Thoughtco\Shopify\Http\Controllers\Webhooks;
 
 use Closure;
 use Illuminate\Http\Request;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Events;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Events;
 
 class CollectionCreateUpdateController extends WebhooksController
 {

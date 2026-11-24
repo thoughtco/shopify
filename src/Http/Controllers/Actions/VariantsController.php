@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Actions;
+namespace Thoughtco\Shopify\Http\Controllers\Actions;
 
 use Illuminate\Http\Request;
 use Statamic\Facades\Entry;

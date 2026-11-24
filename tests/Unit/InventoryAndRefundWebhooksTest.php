@@ -1,17 +1,17 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Illuminate\Support\Facades\Bus;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
-use StatamicRadPack\Shopify\Enums\WebhookTopic;
-use StatamicRadPack\Shopify\Jobs\ImportSingleProductJob;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Enums\WebhookTopic;
+use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class InventoryAndRefundWebhooksTest extends TestCase
 {

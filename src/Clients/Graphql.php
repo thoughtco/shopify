@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Clients;
+namespace Thoughtco\Shopify\Clients;
 
 use GuzzleHttp\Client;
 use Shopify\App\ShopifyApp;

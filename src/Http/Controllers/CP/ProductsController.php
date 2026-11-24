@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\CP;
+namespace Thoughtco\Shopify\Http\Controllers\CP;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Listeners;
+namespace Thoughtco\Shopify\Listeners;
 
 use Statamic\Events\AssetContainerBlueprintFound;
 

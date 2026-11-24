@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\ServiceProvider;
-use StatamicRadPack\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\ServiceProvider;
+use Thoughtco\Shopify\Tests\TestCase;
 
 class ServiceProviderTest extends TestCase
 {
