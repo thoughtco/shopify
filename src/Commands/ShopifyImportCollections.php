@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Commands;
+namespace Thoughtco\Shopify\Commands;
 
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\FetchCollections;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\FetchCollections;
 
 class ShopifyImportCollections extends Command
 {

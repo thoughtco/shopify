@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Jobs;
+namespace Thoughtco\Shopify\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,12 +9,12 @@ use Illuminate\Queue\InteractsWithQueue;
 use Statamic\Facades\Entry;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Support\ProductSummary;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\ThrottlesShopifyRequests;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 use Throwable;
 
 /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Requests;
+namespace Thoughtco\Shopify\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\URL;

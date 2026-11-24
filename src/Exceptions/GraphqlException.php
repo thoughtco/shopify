@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Exceptions;
+namespace Thoughtco\Shopify\Exceptions;
 
 use RuntimeException;
 

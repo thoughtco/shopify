@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Event;
@@ -12,8 +12,8 @@ use Statamic\Events\AssetReplaced;
 use Statamic\Events\AssetReuploaded;
 use Statamic\Facades\Asset;
 use Statamic\Facades\AssetContainer;
-use StatamicRadPack\Shopify\Tests\TestCase;
-use StatamicRadPack\Shopify\Traits\SavesImagesAndMetafields;
+use Thoughtco\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Traits\SavesImagesAndMetafields;
 
 class SavesImagesAndMetafieldsTest extends TestCase
 {

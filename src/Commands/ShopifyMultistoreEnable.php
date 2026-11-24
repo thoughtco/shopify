@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Commands;
+namespace Thoughtco\Shopify\Commands;
 
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;

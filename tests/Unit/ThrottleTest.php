@@ -1,14 +1,14 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Clients\HttpResponse;
-use StatamicRadPack\Shopify\Exceptions\GraphqlException;
-use StatamicRadPack\Shopify\Tests\TestCase;
-use StatamicRadPack\Shopify\Traits\ThrottlesShopifyRequests;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\HttpResponse;
+use Thoughtco\Shopify\Exceptions\GraphqlException;
+use Thoughtco\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 
 class ThrottleTest extends TestCase
 {

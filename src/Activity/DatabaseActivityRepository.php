@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Activity;
+namespace Thoughtco\Shopify\Activity;
 
 use Carbon\CarbonInterface;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
 
 /**
  * Stores activity in a database table, so every server and queue worker shares one log.

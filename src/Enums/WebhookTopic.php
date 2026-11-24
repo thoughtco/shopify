@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Enums;
+namespace Thoughtco\Shopify\Enums;
 
 enum WebhookTopic: string
 {

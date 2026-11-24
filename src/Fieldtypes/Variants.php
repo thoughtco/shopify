@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Fieldtypes;
+namespace Thoughtco\Shopify\Fieldtypes;
 
 use Statamic\Contracts\Entries\Entry;
 use Statamic\Fields\Fieldtype;
-use StatamicRadPack\Shopify\Blueprints\VariantBlueprint;
+use Thoughtco\Shopify\Blueprints\VariantBlueprint;
 
 class Variants extends Fieldtype
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Contracts;
+namespace Thoughtco\Shopify\Contracts;
 
 use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
-use StatamicRadPack\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\Activity;
 
 interface ActivityRepository
 {

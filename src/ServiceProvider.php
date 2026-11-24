@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify;
+namespace Thoughtco\Shopify;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Filesystem\Filesystem;
@@ -11,10 +11,10 @@ use Statamic\Events;
 use Statamic\Facades;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
-use StatamicRadPack\Shopify\Activity\DatabaseActivityRepository;
-use StatamicRadPack\Shopify\Activity\FileActivityRepository;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Activity\DatabaseActivityRepository;
+use Thoughtco\Shopify\Activity\FileActivityRepository;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
 
 class ServiceProvider extends AddonServiceProvider
 {

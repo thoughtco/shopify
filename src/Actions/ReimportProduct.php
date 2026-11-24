@@ -1,12 +1,12 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Actions;
+namespace Thoughtco\Shopify\Actions;
 
 use Statamic\Actions\Action;
 use Statamic\Contracts\Entries\Entry;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Support\StoreConfig;
 
 /**
  * Reimport one or more products from Shopify, from the entry form or the listing

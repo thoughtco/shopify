@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Webhooks;
+namespace Thoughtco\Shopify\Http\Controllers\Webhooks;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Events;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Events;
 
 /**
  * A refund removes its line items from the products' purchase history, on the

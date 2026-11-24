@@ -1,10 +1,10 @@
 <?php
 
-namespace StatamicRadPack\Shopify\UpdateScripts;
+namespace Thoughtco\Shopify\UpdateScripts;
 
 use Statamic\Facades\Entry;
 use Statamic\UpdateScripts\UpdateScript;
-use StatamicRadPack\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Support\ProductSummary;
 
 /**
  * Backfill the price/stock summary (price_min, price_max, in_stock, on_sale) onto

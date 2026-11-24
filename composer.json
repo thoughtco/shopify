@@ -1,5 +1,5 @@
 {
-    "name": "statamic-rad-pack/shopify",
+    "name": "thoughtco/shopify",
     "description": "A Shopify Addon for Statamic",
     "license": "proprietary",
     "authors": [
@@ -25,12 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "StatamicRadPack\\Shopify\\": "src"
+            "Thoughtco\\Shopify\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "StatamicRadPack\\Shopify\\Tests\\": "tests"
+            "Thoughtco\\Shopify\\Tests\\": "tests"
         }
     },
     "config": {
@@ -44,11 +44,11 @@
     "extra": {
         "download-dist": {
             "path": "dist",
-            "url": "https://github.com/statamic-rad-pack/shopify/releases/download/{$version}/dist.tar.gz"
+            "url": "https://github.com/thoughtco/shopify/releases/download/{$version}/dist.tar.gz"
         },
         "laravel": {
             "providers": [
-                "StatamicRadPack\\Shopify\\ServiceProvider"
+                "Thoughtco\\Shopify\\ServiceProvider"
             ]
         },
         "statamic": {

@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Webhooks;
+namespace Thoughtco\Shopify\Http\Controllers\Webhooks;
 
 use Illuminate\Http\Request;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Events;
-use StatamicRadPack\Shopify\Jobs\UpdateInventoryJob;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Events;
+use Thoughtco\Shopify\Jobs\UpdateInventoryJob;
 
 class InventoryLevelUpdateController extends WebhooksController
 {

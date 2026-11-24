@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Activity;
+namespace Thoughtco\Shopify\Activity;
 
 use Carbon\CarbonInterface;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\LazyCollection;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Contracts\ActivityRepository;
 
 /**
  * Stores each activity as a JSON file in a folder per day. Suitable for a single

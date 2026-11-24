@@ -1,12 +1,12 @@
 <?php
 
-use StatamicRadPack\Shopify\Http\Controllers\CP\ActivityController;
-use StatamicRadPack\Shopify\Http\Controllers\CP\DashboardController;
-use StatamicRadPack\Shopify\Http\Controllers\CP\ImportCollectionsController;
-use StatamicRadPack\Shopify\Http\Controllers\CP\ImportProductsController;
-use StatamicRadPack\Shopify\Http\Controllers\CP\ProductsController;
-use StatamicRadPack\Shopify\Http\Controllers\CP\VariantsController;
-use StatamicRadPack\Shopify\Http\Controllers\CP\WebhooksStatusController;
+use Thoughtco\Shopify\Http\Controllers\CP\ActivityController;
+use Thoughtco\Shopify\Http\Controllers\CP\DashboardController;
+use Thoughtco\Shopify\Http\Controllers\CP\ImportCollectionsController;
+use Thoughtco\Shopify\Http\Controllers\CP\ImportProductsController;
+use Thoughtco\Shopify\Http\Controllers\CP\ProductsController;
+use Thoughtco\Shopify\Http\Controllers\CP\VariantsController;
+use Thoughtco\Shopify\Http\Controllers\CP\WebhooksStatusController;
 
 Route::get('/shopify', [DashboardController::class, 'index'])
     ->name('shopify.index');

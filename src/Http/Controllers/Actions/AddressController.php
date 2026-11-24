@@ -1,14 +1,14 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Actions;
+namespace Thoughtco\Shopify\Http\Controllers\Actions;
 
 use Illuminate\Http\Request;
 use Statamic\Facades\User;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Http\Requests;
-use StatamicRadPack\Shopify\Support\Customers;
-use StatamicRadPack\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Http\Requests;
+use Thoughtco\Shopify\Support\Customers;
+use Thoughtco\Shopify\Support\StoreConfig;
 
 class AddressController extends BaseActionController
 {

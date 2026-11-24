@@ -1,14 +1,14 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Controllers\Webhooks;
+namespace Thoughtco\Shopify\Http\Controllers\Webhooks;
 
 use Closure;
 use Illuminate\Http\Request;
 use Statamic\Facades\User;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Events;
-use StatamicRadPack\Shopify\Support\Customers;
-use StatamicRadPack\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Events;
+use Thoughtco\Shopify\Support\Customers;
+use Thoughtco\Shopify\Support\StoreConfig;
 
 class CustomerCreateUpdateController extends WebhooksController
 {

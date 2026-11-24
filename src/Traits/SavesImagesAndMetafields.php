@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Traits;
+namespace Thoughtco\Shopify\Traits;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -10,7 +10,7 @@ use Statamic\Contracts\Assets\Asset as AssetContract;
 use Statamic\Facades\Asset;
 use Statamic\Facades\Path;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Support\DownloadedReplacementFile;
+use Thoughtco\Shopify\Support\DownloadedReplacementFile;
 
 trait SavesImagesAndMetafields
 {

@@ -1,13 +1,13 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests;
+namespace Thoughtco\Shopify\Tests;
 
 use JMac\Testing\Traits\AdditionalAssertions;
 use Statamic\Facades;
 use Statamic\Statamic;
 use Statamic\Testing\AddonTestCase;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
-use StatamicRadPack\Shopify\ServiceProvider;
+use Thoughtco\Shopify\ServiceProvider;
 
 class TestCase extends AddonTestCase
 {

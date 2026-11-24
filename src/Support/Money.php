@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Support;
+namespace Thoughtco\Shopify\Support;
 
 use NumberFormatter;
 use Statamic\Facades\Site;

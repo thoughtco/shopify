@@ -1,16 +1,16 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Http\Middleware;
+namespace Thoughtco\Shopify\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use StatamicRadPack\Shopify\Activity\Activity;
-use StatamicRadPack\Shopify\Activity\ActivityLog;
-use StatamicRadPack\Shopify\Activity\ActivityStatus;
-use StatamicRadPack\Shopify\Enums\WebhookTopic;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Support\WebhookSubscriptions;
+use Thoughtco\Shopify\Activity\Activity;
+use Thoughtco\Shopify\Activity\ActivityLog;
+use Thoughtco\Shopify\Activity\ActivityStatus;
+use Thoughtco\Shopify\Enums\WebhookTopic;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Support\WebhookSubscriptions;
 
 class VerifyShopifyHeaders
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Jobs;
+namespace Thoughtco\Shopify\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,10 +10,10 @@ use Illuminate\Queue\SerializesModels;
 use Statamic\Contracts\Auth\User;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
-use StatamicRadPack\Shopify\Clients\Graphql;
-use StatamicRadPack\Shopify\Support\Customers;
-use StatamicRadPack\Shopify\Support\StoreConfig;
-use StatamicRadPack\Shopify\Traits\ThrottlesShopifyRequests;
+use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Support\Customers;
+use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 
 class CreateOrUpdateShopifyUser implements ShouldQueue
 {

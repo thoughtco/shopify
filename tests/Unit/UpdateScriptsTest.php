@@ -1,11 +1,11 @@
 <?php
 
-namespace StatamicRadPack\Shopify\Tests\Unit;
+namespace Thoughtco\Shopify\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use StatamicRadPack\Shopify\Tests\TestCase;
-use StatamicRadPack\Shopify\UpdateScripts;
+use Thoughtco\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\UpdateScripts;
 
 class UpdateScriptsTest extends TestCase
 {
@@ -134,7 +134,7 @@ tabs:
 
         $this->assertCount(16, $blueprint->fields()->all());
 
-        (new UpdateScripts\UpdateFromFiveToSix('statamic-rad-pack/shopify'))->update();
+        (new UpdateScripts\UpdateFromFiveToSix('thoughtco/shopify'))->update();
 
         $this->assertCount(19, $blueprint->fields()->all());
     }
@@ -152,7 +152,7 @@ tabs:
         $contents['tabs']['main']['sections'][0]['fields'][] = ['handle' => 'in_stock', 'field' => ['type' => 'toggle', 'display' => 'Available']];
         $blueprint->setContents($contents)->save();
 
-        (new UpdateScripts\AddSyncFieldsToProductBlueprint('statamic-rad-pack/shopify'))->update();
+        (new UpdateScripts\AddSyncFieldsToProductBlueprint('thoughtco/shopify'))->update();
 
         $blueprint = Facades\Collection::find(config('shopify.collection_handle', 'products'))->entryBlueprint();
         $tab = $blueprint->contents()['tabs'][UpdateScripts\AddSyncFieldsToProductBlueprint::TAB];
@@ -170,7 +170,7 @@ tabs:
         $this->assertSame('read_only', $blueprint->field('price_min')->get('visibility'));
 
         // running it again changes nothing
-        (new UpdateScripts\AddSyncFieldsToProductBlueprint('statamic-rad-pack/shopify'))->update();
+        (new UpdateScripts\AddSyncFieldsToProductBlueprint('thoughtco/shopify'))->update();
 
         $tab = Facades\Collection::find(config('shopify.collection_handle', 'products'))->entryBlueprint()->contents()['tabs'][UpdateScripts\AddSyncFieldsToProductBlueprint::TAB];
         $this->assertCount(2, $tab['sections']);

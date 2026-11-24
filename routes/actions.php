@@ -2,10 +2,10 @@
 
 use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Illuminate\Support\Facades\Route;
-use StatamicRadPack\Shopify\Http\Controllers\Actions\AddressController;
-use StatamicRadPack\Shopify\Http\Controllers\Actions\VariantsController;
-use StatamicRadPack\Shopify\Http\Controllers\Webhooks;
-use StatamicRadPack\Shopify\Http\Middleware\VerifyShopifyHeaders;
+use Thoughtco\Shopify\Http\Controllers\Actions\AddressController;
+use Thoughtco\Shopify\Http\Controllers\Actions\VariantsController;
+use Thoughtco\Shopify\Http\Controllers\Webhooks;
+use Thoughtco\Shopify\Http\Middleware\VerifyShopifyHeaders;
 
 Route::name('shopify.')
     ->group(function () {

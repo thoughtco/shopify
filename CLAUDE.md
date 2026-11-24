@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is **statamic-rad-pack/shopify**, a Statamic addon (Laravel package) that integrates Shopify with Statamic CMS. It uses the Shopify Admin GraphQL API for product imports and webhooks, and the Shopify Storefront API for frontend cart/checkout interactions.
+This is **thoughtco/shopify**, a Statamic addon (Laravel package) that integrates Shopify with Statamic CMS. It uses the Shopify Admin GraphQL API for product imports and webhooks, and the Shopify Storefront API for frontend cart/checkout interactions.
 
 - PHP 8.3/8.4, Laravel 12, Statamic ^6.0
-- Namespace: `StatamicRadPack\Shopify`
-- Packagist: `statamic-rad-pack/shopify`
+- Namespace: `Thoughtco\Shopify`
+- Packagist: `thoughtco/shopify`
 
 ## Commands
 
