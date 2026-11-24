@@ -10,6 +10,7 @@
         }
     ],
     "require": {
+        "php": "^8.3",
         "pixelfear/composer-dist-plugin": "^0.1",
         "shopify/shopify-app-php": "^1.0.1",
         "statamic/cms": "^6.0"
