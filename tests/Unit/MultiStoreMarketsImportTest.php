@@ -104,6 +104,34 @@ class MultiStoreMarketsImportTest extends TestCase
     }
 
     #[Test]
+    public function markets_without_a_location_in_their_country_use_stock_from_locations_that_fulfil_online_orders()
+    {
+        config()->set('shopify.multi_store', array_merge($this->marketsConfig(), [
+            'markets' => ['GB' => ['currency' => '£'], 'US' => ['currency' => '$']],
+        ]));
+        $this->setupCollectionsAndTaxonomies();
+
+        $json = json_decode($this->getProductJson(), true);
+        $json['data']['product']['variants']['edges'][0]['node']['inventoryItem']['inventoryLevels']['nodes'][] = [
+            'location' => ['fulfillsOnlineOrders' => false, 'address' => ['countryCode' => 'FR']],
+            'quantities' => [['name' => 'available', 'quantity' => 100]],
+        ];
+
+        $this->mock(Graphql::class, function (MockInterface $mock) use ($json) {
+            $mock->shouldReceive('query')->andReturn(new HttpResponse(status: 200, body: json_encode($json)));
+        });
+
+        ImportSingleProductJob::dispatch(108828309);
+
+        $marketData = Facades\Entry::whereCollection('variants')->first()->get('market_data', []);
+
+        // GB still only counts its own locations
+        $this->assertSame(10, $marketData['GB']['inventory_quantity']);
+        // the US has no location, so it's supplied by the GB and IE locations (not the FR one, which doesn't fulfil online orders)
+        $this->assertSame(15, $marketData['US']['inventory_quantity']);
+    }
+
+    #[Test]
     public function top_level_price_fields_are_not_affected_by_markets_mode()
     {
         config()->set('shopify.multi_store', $this->marketsConfig());
