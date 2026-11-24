@@ -15,6 +15,7 @@ use Thoughtco\Shopify\Activity\DatabaseActivityRepository;
 use Thoughtco\Shopify\Activity\FileActivityRepository;
 use Thoughtco\Shopify\Clients\Graphql;
 use Thoughtco\Shopify\Contracts\ActivityRepository;
+use Thoughtco\Shopify\Support\LegacyNamespace;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -71,6 +72,8 @@ class ServiceProvider extends AddonServiceProvider
 
     public function register()
     {
+        LegacyNamespace::register();
+
         parent::register();
 
         $this->app->singleton(ActivityRepository::class, function ($app) {

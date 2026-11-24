@@ -15,6 +15,9 @@
         "shopify/shopify-app-php": "^1.0.1",
         "statamic/cms": "^6.0"
     },
+    "replace": {
+        "statamic-rad-pack/shopify": "self.version"
+    },
     "require-dev": {
         "jasonmccreary/laravel-test-assertions": "^2.9",
         "laravel/pint": "^1.0",

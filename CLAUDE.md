@@ -38,6 +38,8 @@ php artisan shopify:webhooks:register --prune     # Also remove stale subscripti
 
 `src/ServiceProvider.php` registers all addon components: Artisan commands, fieldtypes, event listeners, routes, query scopes, CP scripts, and Antlers tags. It also initializes the Shopify API client via `Shopify\Context` and binds `Shopify\Clients\Graphql` into the container (with support for both legacy `admin_token` and OAuth `client_credentials` flow).
 
+`Support\LegacyNamespace` (registered first in `ServiceProvider::register()`) aliases old `StatamicRadPack\Shopify\*` class names to `Thoughtco\Shopify\*` on demand, with a deprecation notice. It exists for the 9.x upgrade from `statamic-rad-pack/shopify` and should be removed in the next major version.
+
 ### Enums
 
 `src/Enums/WebhookTopic.php` — backed enum listing every supported Shopify webhook topic (the register command, status card and activity filters all read it; tests count `cases()` rather than a number). Each case exposes `->routeName()` and `->callbackUrl()` so the topic→route mapping is defined in one place and shared by the register command and the CP status controller.
