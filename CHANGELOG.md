@@ -1,5 +1,26 @@
 # Changelog
 
+## v9.0.0 - 2026-11-24
+
+### What's Changed
+* Fix import, webhook and customer bugs by @ryanmitchell in https://github.com/thoughtco/shopify/pull/378
+* Performance improvements for imports, tags and webhooks by @ryanmitchell in https://github.com/thoughtco/shopify/pull/379
+* Robustness improvements and cleanup by @ryanmitchell in https://github.com/thoughtco/shopify/pull/380
+* Add a Shopify activity log to the control panel by @ryanmitchell in https://github.com/thoughtco/shopify/pull/382
+* Move imported product data into a Details tab by @ryanmitchell in https://github.com/thoughtco/shopify/pull/383
+* Reimport several products at once from the listing by @ryanmitchell in https://github.com/thoughtco/shopify/pull/384
+* Cart: markets context, robustness and locale-aware prices by @ryanmitchell in https://github.com/thoughtco/shopify/pull/386
+* Update images that change in Shopify using Statamic's reupload and replace by @ryanmitchell in https://github.com/thoughtco/shopify/pull/387
+* Combine the CP imports into one card and give the settings sections titles by @ryanmitchell in https://github.com/thoughtco/shopify/pull/388
+* Keep stock and purchase history in step with inventory, cancellations and refunds; add webhooks:register --prune by @ryanmitchell in https://github.com/thoughtco/shopify/pull/389
+* Multi-store customers, and accept webhooks in markets mode by @ryanmitchell in https://github.com/thoughtco/shopify/pull/390
+* Import a product's collections that haven't been imported yet by @ryanmitchell in https://github.com/thoughtco/shopify/pull/391
+* Restore the admin_token config key for legacy custom apps by @ryanmitchell in https://github.com/thoughtco/shopify/pull/381
+* Rename to thoughtco/shopify and the Thoughtco\Shopify namespace by @ryanmitchell in https://github.com/thoughtco/shopify/pull/392
+
+
+**Full Changelog**: https://github.com/thoughtco/shopify/compare/v8.0.0...v9.0.0
+
 ## v8.0.0 - 2026-10-13
 
 ### What's Changed
