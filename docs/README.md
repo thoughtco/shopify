@@ -1,6 +1,6 @@
 # Documentation
 
-These docs are published to [docs.tc/shopify](https://docs.tc/shopify). On each release, the `Docs` workflow asks docs.tc to sync this folder, and docs.tc opens a pull request with the changes.
+These docs are published to [www.docs.tc/shopify](https://www.docs.tc/shopify). On each release, the `Docs` workflow asks docs.tc to sync this folder, and docs.tc opens a pull request with the changes.
 
 ## Layout
 
