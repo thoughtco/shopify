@@ -24,6 +24,7 @@ use Thoughtco\Shopify\Clients\Graphql;
 use Thoughtco\Shopify\Events\ProductImportFailed;
 use Thoughtco\Shopify\Exceptions\GraphqlException;
 use Thoughtco\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Support\SellingPlans;
 use Thoughtco\Shopify\Support\StoreConfig;
 use Thoughtco\Shopify\Traits\SavesImagesAndMetafields;
 use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
@@ -54,6 +55,11 @@ class ImportSingleProductJob implements ShouldQueue
      */
     protected array $variantChanges = ['added' => 0, 'updated' => 0, 'removed' => 0];
 
+    /**
+     * The product's selling plan groups, when selling plans are imported.
+     */
+    protected array $sellingPlanGroups = [];
+
     public function __construct(
         public int $productId,
         public ?array $orderData = [],
@@ -83,6 +89,8 @@ class ImportSingleProductJob implements ShouldQueue
         $graphql = StoreConfig::clientFor($this->storeHandle);
 
         $variantFields = $this->buildVariantFields();
+
+        $sellingPlanFields = SellingPlans::enabled() ? SellingPlans::productQueryFields() : '';
 
         $query = <<<QUERY
         {
@@ -132,6 +140,7 @@ class ImportSingleProductJob implements ShouldQueue
               }
             }
             productType
+            {$sellingPlanFields}
             resourcePublications(onlyPublished: false, first: 100) {
               edges {
                 node {
@@ -260,6 +269,11 @@ class ImportSingleProductJob implements ShouldQueue
 
         // Update slug in case it has changed
         $entry->slug($this->data['handle']);
+
+        if (SellingPlans::enabled()) {
+            $this->sellingPlanGroups = SellingPlans::groupsFromGraphql($this->data);
+            $data = array_merge($data, $this->sellingPlanData($entry));
+        }
 
         // Import Variant
         $variantEntries = $this->importVariants($this->data['variants'], $this->data['handle']);
@@ -576,6 +590,8 @@ class ImportSingleProductJob implements ShouldQueue
                     tracked
                   }';
 
+        $sellingPlanFields = SellingPlans::enabled() ? "\n".SellingPlans::variantQueryFields() : '';
+
         $contextualPricingFields = '';
         if (StoreConfig::isMarketsMode()) {
             foreach (array_keys(StoreConfig::getMarkets()) as $countryCode) {
@@ -629,7 +645,7 @@ class ImportSingleProductJob implements ShouldQueue
                     value
                   }
                   sku
-                  title{$contextualPricingFields}
+                  title{$contextualPricingFields}{$sellingPlanFields}
         GQL;
     }
 
@@ -666,6 +682,31 @@ class ImportSingleProductJob implements ShouldQueue
         }
 
         return $marketData;
+    }
+
+    /**
+     * The product's selling plan fields. In unified multi-store mode each store's plans
+     * are kept in multi_store_selling_plans.{store}, and only the primary store's are
+     * also the product's own (as with variant prices).
+     */
+    private function sellingPlanData(?EntryContract $entry): array
+    {
+        $plans = [
+            'requires_selling_plan' => (bool) ($this->data['requiresSellingPlan'] ?? false),
+            'selling_plan_groups' => $this->sellingPlanGroups,
+        ];
+
+        if (! $this->storeHandle || ! StoreConfig::isUnifiedMode()) {
+            return $plans;
+        }
+
+        $byStore = $entry?->get('multi_store_selling_plans') ?? [];
+        $byStore[$this->storeHandle] = $plans;
+
+        return array_merge(
+            StoreConfig::isPrimaryStore($this->storeHandle) ? $plans : [],
+            ['multi_store_selling_plans' => $byStore],
+        );
     }
 
     /**
@@ -851,6 +892,10 @@ class ImportSingleProductJob implements ShouldQueue
                 'requires_shipping' => Arr::get($variant, 'inventoryItem.requiresShipping', null),
             ], collect($variant['selectedOptions'] ?? [])->mapWithKeys(fn ($opt, $index) => ['option'.($index + 1) => $opt['value']])->all());  // blueprint update: what if there are more than 3?
 
+            if (SellingPlans::enabled()) {
+                $data['selling_plan_ids'] = SellingPlans::variantPlanIds($variant, $this->sellingPlanGroups);
+            }
+
             // Markets mode: write territory-specific pricing to market_data
             if (StoreConfig::isMarketsMode()) {
                 $data['market_data'] = $this->buildMarketData($variant);
@@ -865,13 +910,18 @@ class ImportSingleProductJob implements ShouldQueue
                     'inventory_policy' => Arr::get($variant, 'inventoryItem.tracked') ? ($variant['inventoryPolicy'] ?? null) : 'CONTINUE',
                 ];
 
+                // each store has its own selling plans
+                if (SellingPlans::enabled()) {
+                    $storeData['selling_plan_ids'] = $data['selling_plan_ids'];
+                }
+
                 $existingMultiStoreData = $entry->get('multi_store_data', []);
                 $existingMultiStoreData[$this->storeHandle] = $storeData;
                 $data['multi_store_data'] = $existingMultiStoreData;
 
                 // For non-primary stores, do not overwrite the top-level pricing fields
                 if (! StoreConfig::isPrimaryStore($this->storeHandle)) {
-                    unset($data['price'], $data['compare_at_price'], $data['inventory_quantity'], $data['inventory_policy']);
+                    unset($data['price'], $data['compare_at_price'], $data['inventory_quantity'], $data['inventory_policy'], $data['selling_plan_ids']);
                 }
             }
 

@@ -168,6 +168,13 @@ return [
     'import_missing_collections' => env('SHOPIFY_IMPORT_MISSING_COLLECTIONS', true),
 
     /**
+     * Import selling plans (subscriptions and other purchase options from apps such as
+     * Shopify Subscriptions or Recharge) onto products and variants. Needs the
+     * read_purchase_options Admin API scope: enable it once the app has that scope.
+     */
+    'selling_plans' => env('SHOPIFY_SELLING_PLANS', false),
+
+    /**
      * The activity log records every webhook received and every import run (from
      * webhooks, the control panel or the command line), shown under Shopify > Activity.
      *
