@@ -116,6 +116,11 @@ const createData = (Alpine) => {
         variants: variants,
         variantEl: null,
 
+        // markets mode: the active market, kept by the cart store (it follows shopify.updateMarket)
+        get market() {
+            return Alpine.store('statamic.shopify.cart')?.market ?? window.shopifyConfig?.market ?? null;
+        },
+
         init() {
             this.variantEl = this.$el.querySelector('[name="ss-product-variant"]');
 
