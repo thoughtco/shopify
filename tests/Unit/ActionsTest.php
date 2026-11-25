@@ -6,6 +6,7 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
 use Statamic\Facades\User;
+use Statamic\Support\Arr;
 use Thoughtco\Shopify\Clients\Graphql;
 use Thoughtco\Shopify\Clients\HttpResponse;
 use Thoughtco\Shopify\Tests\TestCase;
@@ -73,10 +74,10 @@ class ActionsTest extends TestCase
     #[Test]
     public function address_endpoints_require_authentication()
     {
-        $this->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g'])
+        $this->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB'])
             ->assertStatus(401);
 
-        $this->postJson('/!/shopify/address/1', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g'])
+        $this->postJson('/!/shopify/address/1', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB'])
             ->assertStatus(401);
 
         $this->postJson('/!/shopify/address/1', ['_method' => 'delete'])
@@ -99,7 +100,7 @@ class ActionsTest extends TestCase
         });
 
         $this->actingAsCustomer(555)
-            ->postJson('/!/shopify/address', ['customer_id' => 999, 'firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g'])
+            ->postJson('/!/shopify/address', ['customer_id' => 999, 'firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB'])
             ->assertStatus(200);
 
         $this->assertSame('gid://shopify/Customer/555', $captured['variables']['customerId']);
@@ -142,7 +143,7 @@ class ActionsTest extends TestCase
         $response = $this->postJson('/!/shopify/address', []);
         $response->assertStatus(422);
 
-        $response = $this->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g']);
+        $response = $this->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB']);
         $response->assertStatus(200);
     }
 
@@ -183,7 +184,7 @@ class ActionsTest extends TestCase
         $response = $this->postJson('/!/shopify/address/1', []);
         $response->assertStatus(422);
 
-        $response = $this->postJson('/!/shopify/address/1', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g']);
+        $response = $this->postJson('/!/shopify/address/1', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB']);
         $response->assertStatus(200);
     }
 
@@ -271,8 +272,46 @@ class ActionsTest extends TestCase
         });
 
         $this->actingAsCustomer()
-            ->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g'])
+            ->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB'])
             ->assertStatus(422)
             ->assertJson(['message' => 'Zip is invalid']);
+    }
+
+    #[Test]
+    public function sends_country_and_province_codes_and_accepts_codes_in_the_old_fields()
+    {
+        $captured = [];
+
+        $this->mock(Graphql::class, function (MockInterface $mock) use (&$captured) {
+            $mock->shouldReceive('query')
+                ->andReturnUsing(function ($args) use (&$captured) {
+                    $captured[] = $args['variables']['address'];
+
+                    return new HttpResponse(status: 200, body: '{"data":{"customerAddressCreate":{"address":{"id":"gid://shopify/MailingAddress/1"},"userErrors":[]}}}');
+                });
+        });
+
+        $address = ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f'];
+
+        $this->actingAsCustomer()->postJson('/!/shopify/address', $address + ['countryCode' => 'us', 'provinceCode' => 'ca'])->assertOk();
+        $this->actingAsCustomer()->postJson('/!/shopify/address', $address + ['country' => 'GB', 'province' => 'ENG'])->assertOk();
+        $this->actingAsCustomer()->postJson('/!/shopify/address', $address + ['countryCode' => 'GB', 'province' => 'Kent'])->assertOk();
+
+        $this->assertSame(['countryCode' => 'US', 'provinceCode' => 'CA'], Arr::only($captured[0], ['countryCode', 'provinceCode', 'country', 'province']));
+        $this->assertSame(['countryCode' => 'GB', 'provinceCode' => 'ENG'], Arr::only($captured[1], ['countryCode', 'provinceCode', 'country', 'province']));
+
+        // a province name isn't a code, and MailingAddressInput has no province field
+        $this->assertSame(['countryCode' => 'GB'], Arr::only($captured[2], ['countryCode', 'provinceCode', 'country', 'province']));
+    }
+
+    #[Test]
+    public function needs_a_country_code_rather_than_a_name()
+    {
+        $this->mock(Graphql::class)->shouldNotReceive('query');
+
+        $this->actingAsCustomer()
+            ->postJson('/!/shopify/address', ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'country' => 'Ireland'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['countryCode' => 'country']);
     }
 }

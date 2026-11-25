@@ -29,6 +29,103 @@ class Shopify extends Tags
     use GetsRedirects, Hookable, OutputsItems, QueriesConditions, QueriesOrderBys, RendersForms;
 
     /**
+     * The order fields the customer:orders and customer:order tags output.
+     */
+    private const ORDER_FIELDS = <<<'FIELDS'
+        id
+        billingAddress {
+          address1
+          address2
+          name
+          company
+          city
+          country
+          phone
+          province
+          zip
+        }
+        shippingAddress {
+          address1
+          address2
+          name
+          company
+          city
+          country
+          phone
+          province
+          zip
+        }
+        lineItems(first: 250) {
+          nodes {
+            id
+            quantity
+            sku
+            title
+            image {
+              url
+            }
+            discountedUnitPriceSet {
+              presentmentMoney {
+                currencyCode
+                amount
+              }
+            }
+            originalUnitPriceSet {
+              presentmentMoney {
+                currencyCode
+                amount
+              }
+            }
+          }
+        }
+        totalPriceSet {
+          presentmentMoney {
+            currencyCode
+            amount
+          }
+        }
+        totalReceivedSet {
+          presentmentMoney {
+            currencyCode
+            amount
+          }
+        }
+        totalDiscountsSet {
+          presentmentMoney {
+            currencyCode
+            amount
+          }
+        }
+        subtotalPriceSet {
+          presentmentMoney {
+            currencyCode
+            amount
+          }
+        }
+        totalShippingPriceSet {
+          presentmentMoney {
+            currencyCode
+            amount
+          }
+        }
+        totalTaxSet {
+          presentmentMoney {
+            currencyCode
+            amount
+          }
+        }
+        requiresShipping
+        cancelledAt
+        cancelReason
+        createdAt
+        discountCodes
+        displayFinancialStatus
+        displayFulfillmentStatus
+        statusPageUrl
+        name
+        FIELDS;
+
+    /**
      * @return string|array
      */
     public function inStock()
@@ -649,6 +746,9 @@ class Shopify extends Tags
         $query = <<<QUERY
             {
               customer(id: "gid://shopify/Customer/{$customerId}") {
+                defaultAddress {
+                  id
+                }
                 addresses {
                   id
                   firstName
@@ -658,7 +758,9 @@ class Shopify extends Tags
                   address2
                   city
                   province
+                  provinceCode
                   country
+                  countryCodeV2
                   zip
                   phone
                   name
@@ -669,13 +771,20 @@ class Shopify extends Tags
 
         $response = $graphql->query(['query' => $query]);
 
-        if ($data = Arr::get($response->getDecodedBody() ?? [], 'data.customer.addresses', [])) {
+        $customer = Arr::get($response->getDecodedBody() ?? [], 'data.customer') ?? [];
+        $defaultId = Arr::get($customer, 'defaultAddress.id');
+
+        if ($data = $customer['addresses'] ?? []) {
             $data = collect($data)
-                ->map(function ($address) {
-                    $address['id'] = Str::of($address['id'])->afterLast('/')->before('?');
+                ->map(function ($address) use ($defaultId) {
+                    // `default` marks the customer's default address; the codes are what the address form sends
+                    $address['default'] = $defaultId !== null && $address['id'] === $defaultId;
+                    $address['countryCode'] = Arr::pull($address, 'countryCodeV2');
+                    $address['id'] = (string) Str::of($address['id'])->afterLast('/')->before('?');
 
                     return $address;
                 })
+                ->sortByDesc('default')
                 ->values()
                 ->all();
         }
@@ -706,83 +815,13 @@ class Shopify extends Tags
         [$userId, $graphql] = $this->resolveCustomerGraphql($user, $storeParam);
 
         $search = "customer_id:$userId $status";
+        $orderFields = self::ORDER_FIELDS;
 
         $query = <<<QUERY
             query (\$numItems: Int!, \$cursor: String, \$sortKey: OrderSortKeys, \$reverse: Boolean) {
               orders(first: \$numItems, after: \$cursor, sortKey: \$sortKey, reverse: \$reverse, query: "$search") {
                 nodes {
-                  id
-                  billingAddress {
-                    address1
-                    address2
-                    name
-                    company
-                    city
-                    country
-                    phone
-                    province
-                    zip
-                  }
-                  shippingAddress {
-                    address1
-                    address2
-                    name
-                    company
-                    city
-                    country
-                    phone
-                    province
-                    zip
-                  }
-                  lineItems(first: 250) {
-                    nodes {
-                      id
-                      quantity
-                      sku
-                      title
-                      image {
-                        url
-                      }
-                      discountedUnitPriceSet {
-                        presentmentMoney {
-                          currencyCode
-                          amount
-                        }
-                      }
-                      originalUnitPriceSet {
-                        presentmentMoney {
-                          currencyCode
-                          amount
-                        }
-                      }
-                    }
-                  }
-                  totalPriceSet {
-                    presentmentMoney {
-                      currencyCode
-                      amount
-                    }
-                  }
-                  totalReceivedSet {
-                    presentmentMoney {
-                      currencyCode
-                      amount
-                    }
-                  }
-                  totalDiscountsSet {
-                    presentmentMoney {
-                      currencyCode
-                      amount
-                    }
-                  }
-                  requiresShipping
-                  cancelledAt
-                  cancelReason
-                  createdAt
-                  discountCodes
-                  displayFulfillmentStatus
-                  statusPageUrl
-                  name
+                  {$orderFields}
                 }
                 pageInfo {
                   hasNextPage
@@ -817,22 +856,7 @@ class Shopify extends Tags
             $data = $response->getDecodedBody();
 
             if ($orders = Arr::get($data, 'data.orders.nodes', [])) {
-                $items = array_merge($items, collect($orders)->map(function ($order) {
-                    $order['id'] = (int) Str::afterLast($order['id'], '/');
-
-                    Arr::set(
-                        $order,
-                        'lineItems.nodes',
-                        collect(Arr::get($order, 'lineItems.nodes'))
-                            ->map(function ($lineItem) {
-                                $lineItem['id'] = (int) Str::afterLast($lineItem['id'], '/');
-
-                                return $lineItem;
-                            })->all()
-                    );
-
-                    return $order;
-                })->all());
+                $items = array_merge($items, collect($orders)->map(fn ($order) => $this->formatOrder($order))->all());
             }
 
             $hasMore = (bool) Arr::get($data, 'data.orders.pageInfo.hasNextPage', false);
@@ -858,6 +882,80 @@ class Shopify extends Tags
         }
 
         return array_merge($this->output($data), ['orders_count' => $total]);
+    }
+
+    /**
+     * One of the logged in user's orders, by its ID (`id="5551234567"`, or the order's GID),
+     * with the same fields as customer:orders. If the order doesn't belong to the user's
+     * Shopify customer, or doesn't exist, only `not_found` is set, so an ID from the URL
+     * can't show someone else's order.
+     */
+    public function customerOrder()
+    {
+        $notFound = ['not_found' => true];
+
+        if (! $user = User::current()) {
+            return $notFound;
+        }
+
+        $id = Str::afterLast((string) $this->params->get('id'), '/');
+
+        if (! ctype_digit($id)) {
+            return $notFound;
+        }
+
+        [$customerId, $graphql] = $this->resolveCustomerGraphql($user, $this->params->get('store'));
+
+        if ($customerId === 'none') {
+            return $notFound;
+        }
+
+        $orderFields = self::ORDER_FIELDS;
+
+        $response = $graphql->query([
+            'query' => <<<QUERY
+                query (\$id: ID!) {
+                  order(id: \$id) {
+                    customer {
+                      id
+                    }
+                    {$orderFields}
+                  }
+                }
+                QUERY,
+            'variables' => ['id' => 'gid://shopify/Order/'.$id],
+        ]);
+
+        $order = Arr::get($response->getDecodedBody() ?? [], 'data.order');
+
+        if (! $order || Arr::get($order, 'customer.id') !== 'gid://shopify/Customer/'.$customerId) {
+            return $notFound;
+        }
+
+        unset($order['customer']);
+
+        return array_merge($this->formatOrder($order), ['not_found' => false]);
+    }
+
+    /**
+     * Numeric IDs for an order and its line items.
+     */
+    private function formatOrder(array $order): array
+    {
+        $order['id'] = (int) Str::afterLast($order['id'], '/');
+
+        Arr::set(
+            $order,
+            'lineItems.nodes',
+            collect(Arr::get($order, 'lineItems.nodes'))
+                ->map(function ($lineItem) {
+                    $lineItem['id'] = (int) Str::afterLast($lineItem['id'], '/');
+
+                    return $lineItem;
+                })->all()
+        );
+
+        return $order;
     }
 
     private function countOrders($graphql, string $search): int

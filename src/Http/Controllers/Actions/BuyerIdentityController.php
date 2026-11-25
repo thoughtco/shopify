@@ -38,6 +38,7 @@ class BuyerIdentityController extends Controller
                     email
                     phone
                     defaultAddress {
+                      id
                       firstName
                       lastName
                       company
@@ -48,6 +49,21 @@ class BuyerIdentityController extends Controller
                       countryCodeV2
                       zip
                       phone
+                    }
+                    addressesV2(first: 50) {
+                      nodes {
+                        id
+                        firstName
+                        lastName
+                        company
+                        address1
+                        address2
+                        city
+                        provinceCode
+                        countryCodeV2
+                        zip
+                        phone
+                      }
                     }
                   }
                 }
@@ -66,8 +82,30 @@ class BuyerIdentityController extends Controller
         return $this->private(response()->json(array_filter([
             'email' => ($customer['email'] ?? null) ?: $user->email(),
             'phone' => $customer['phone'] ?? null,
-            'deliveryAddress' => $this->address($customer['defaultAddress'] ?? null),
+            'deliveryAddress' => $this->address($this->deliveryAddress($customer, $request->query('country'))),
         ])));
+    }
+
+    /**
+     * The address to pre-fill: the default address, or with a `country` (the page's market
+     * in markets mode) the customer's address in that country, the default one first, so
+     * checkout stays in that market. None if they have no address there: a delivery address
+     * decides the checkout's market and currency.
+     */
+    private function deliveryAddress(array $customer, mixed $country): ?array
+    {
+        $default = $customer['defaultAddress'] ?? null;
+
+        if (! is_string($country) || ! preg_match('/^[A-Za-z]{2}$/', $country)) {
+            return $default;
+        }
+
+        $country = strtoupper($country);
+
+        return collect([$default])
+            ->concat(Arr::get($customer, 'addressesV2.nodes') ?? [])
+            ->filter()
+            ->first(fn ($address) => ($address['countryCodeV2'] ?? null) === $country);
     }
 
     /**

@@ -208,3 +208,57 @@ test('the cart store does nothing when buyer identity is off', async () => {
     assert.equal(fetches.length, 0);
     assert.equal(requests.length, 0);
 });
+
+test('getBuyerIdentity asks for an address in the market’s country', async () => {
+    window.shopifyConfig.store = 'uk';
+    window.shopifyConfig.country = 'IE';
+
+    await getBuyerIdentity();
+
+    assert.equal(fetches[0].url, '/!/shopify/buyer?store=uk&country=IE');
+});
+
+test('setDeliveryAddress with null removes the cart’s delivery address', async () => {
+    await setDeliveryAddress('gid://shopify/Cart/1', null);
+
+    assert.deepEqual(requests[0].variables, { cartId: 'gid://shopify/Cart/1', addresses: [] });
+});
+
+test('in markets mode the cart store applies the buyer identity again for a new market', async () => {
+    window.shopifyConfig.country = 'GB';
+
+    store().updateFromResponse(cart('gid://shopify/Cart/1'));
+    await settle();
+
+    assert.match(fetches[0].url, /country=GB/);
+    assert.deepEqual(requests[1].variables.addresses, [{ address: { deliveryAddress }, selected: true }]);
+    assert.equal(storage['statamic.shopify.cart.id:buyer'], 'gid://shopify/Cart/1|GB');
+
+    // the customer has no address in Ireland: the GB address is removed, as it would
+    // move checkout back to GBP
+    window.shopifyConfig.country = 'IE';
+    buyerResponse = json(buyer);
+
+    store().updateFromResponse(cart('gid://shopify/Cart/1'));
+    await settle();
+
+    assert.equal(fetches.length, 2);
+    assert.match(fetches[1].url, /country=IE/);
+    assert.deepEqual(requests[3].variables.addresses, []);
+    assert.equal(storage['statamic.shopify.cart.id:buyer'], 'gid://shopify/Cart/1|IE');
+
+    // and not again in the same market
+    store().updateFromResponse(cart('gid://shopify/Cart/1'));
+    await settle();
+    assert.equal(fetches.length, 2);
+});
+
+test('without markets, a customer with no address doesn’t clear the cart’s address', async () => {
+    buyerResponse = json(buyer);
+
+    store().updateFromResponse(cart('gid://shopify/Cart/1'));
+    await settle();
+
+    assert.equal(requests.length, 1);
+    assert.match(requests[0].query, /cartBuyerIdentityUpdate/);
+});
