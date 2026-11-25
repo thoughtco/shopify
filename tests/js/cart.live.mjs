@@ -155,3 +155,43 @@ test('sets the buyer identity and delivery address', { skip: ! configured && 'no
     assert.ok(current?.id, 'cartDeliveryAddressesReplace');
     assert.deepEqual(errors, []);
 });
+
+test('buyNow creates a cart with the buyer identity and delivery address, ready for checkout', { skip: ! configured && 'no .env.live' }, async () => {
+    window.shopifyConfig.country = undefined;
+    errors.length = 0;
+
+    const variantId = await firstVariantId();
+    assert.ok(variantId, 'the store needs a product available to the storefront');
+
+    const identity = {
+        email: 'buy-now@example.com',
+        deliveryAddress: { firstName: 'Ada', lastName: 'Lovelace', address1: '1 Donegall Square', city: 'Belfast', countryCode: 'GB', zip: 'BT1 5GS' },
+    };
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => url === '/!/shopify/buyer'
+        ? new Response(JSON.stringify(identity), { status: 200, headers: { 'Content-Type': 'application/json' } })
+        : originalFetch(url, options);
+    window.shopifyConfig.buyerIdentityUrl = '/!/shopify/buyer';
+
+    try {
+        const created = await cart.buyNow([{ merchandiseId: variantId, quantity: 1 }], { redirect: false, note: 'buy now', attributes: [{ key: 'source', value: 'live-test' }] });
+
+        assert.deepEqual(errors, []);
+        assert.ok(created?.checkoutUrl, 'the cart has a checkout URL');
+        assert.equal(created.lines.edges.length, 1, 'only the bought line');
+        assert.equal(created.note, 'buy now');
+
+        // check what Shopify stored, as the bundled cart query doesn't ask for the email or address
+        const { data } = await client.request(`query ($id: ID!) { cart(id: $id) {
+            buyerIdentity { email }
+            delivery { addresses { selected address { ... on CartDeliveryAddress { city zip } } } }
+        } }`, { variables: { id: created.id } });
+
+        assert.equal(data.cart.buyerIdentity.email, 'buy-now@example.com');
+        assert.deepEqual(data.cart.delivery.addresses.map(({ selected, address }) => ({ selected, ...address })), [{ selected: true, city: 'Belfast', zip: 'BT1 5GS' }]);
+    } finally {
+        globalThis.fetch = originalFetch;
+        window.shopifyConfig.buyerIdentityUrl = undefined;
+    }
+});
