@@ -24,6 +24,7 @@ class ServiceProvider extends AddonServiceProvider
     protected $commands = [
         Commands\ShopifyActivityPrune::class,
         Commands\ShopifyImportCollections::class,
+        Commands\ShopifyImportMetaobjects::class,
         Commands\ShopifyImportProducts::class,
         Commands\ShopifyImportSingleProduct::class,
         Commands\ShopifyMultistoreDisable::class,

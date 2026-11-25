@@ -127,6 +127,16 @@ return [
     'metafields_parser' => ParseMetafields::class,
 
     /**
+     * Metaobject references in metafields are fetched and imported as their fields
+     * (requires the read_metaobjects access scope). `collection` is where
+     * `php artisan shopify:import:metaobjects {type}` saves metaobjects.
+     */
+    'metaobjects' => [
+        'resolve' => env('SHOPIFY_RESOLVE_METAOBJECTS', true),
+        'collection' => env('SHOPIFY_METAOBJECTS_COLLECTION', 'metaobjects'),
+    ],
+
+    /**
      * If a new user is created by Shopify should the website create
      * a matching user account for them?
      */

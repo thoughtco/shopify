@@ -27,6 +27,7 @@ vendor/bin/pint
 php artisan shopify:import:all           # Import all products via queue
 php artisan shopify:import:single        # Import a single product
 php artisan shopify:import:collections   # Import all collections
+php artisan shopify:import:metaobjects designer  # Import all metaobjects of a type into a collection (shopify.metaobjects.collection)
 php artisan shopify:webhooks:register    # Register all webhook subscriptions in Shopify
 php artisan shopify:webhooks:register --store=uk  # Register for a specific store (multi-store)
 php artisan shopify:webhooks:register --prune     # Also remove stale subscriptions to the addon's webhook URLs (asks first; --force skips)
@@ -107,6 +108,7 @@ CP assets are compiled to `dist/` (Vite-built). The `resources/js/shopify/` dire
 - `inventory_levels/update` → `Jobs\UpdateInventoryJob`: looks up the inventory item's variant (total `inventoryQuantity`) and updates that variant entry + `ProductSummary::syncForVariant()`; in multi-store mode it re-imports the product for the store instead.
 - `ProductSummary` (`src/Support`) — derives `price_min`, `price_max`, `in_stock`, `on_sale` from a product's variants. Written onto the product on import, on CP variant edit (`syncForVariant`), and backfilled by `UpdateScripts\AddProductSummary`. Used by the `product_has_stock` scope and, when a product is in context, the `product_price` / `in_stock` tags.
 - `ThrottlesShopifyRequests` — wraps `Graphql::query()` calls; inspects `extensions.cost.throttleStatus` and calls `throttleSleep()` if available budget < `config('shopify.throttle_threshold')` points. Retries `THROTTLED` responses, throws `Exceptions\GraphqlException` when a query fails outright (no `data`), and only logs a warning for partial errors (e.g. a missing access scope on one field). The sleep is extracted into a protected method so tests can override it without actually sleeping.
+- Metaobjects: `ResolvesMetaobjects` (`src/Traits`) finds `metaobject_reference` / `list.metaobject_reference` metafields (by `type`, or a `gid://shopify/Metaobject/` value) and fetches them in batched `nodes(ids:)` queries after the main query (never inline: cost would multiply by variants × metafields), attaching them as `reference` / `references.nodes` like an inline query would. One nested metaobject level; media resolve to URLs. Failures log and keep the GIDs; `shopify.metaobjects.resolve` turns it off. `ParseMetafields` only converts metafields whose reference has `fields` (a metaobject), so other output is unchanged; its public `metaobject()` is reused by `shopify:import:metaobjects`.
 - Mutation error handling: use `HttpResponse::firstError('mutationName')`, which returns the first top-level `errors` message or the first `data.{mutation}.userErrors` message (`userErrors` is a list).
 
 ### Extensibility Points
