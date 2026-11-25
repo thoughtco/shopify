@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Illuminate\Support\Facades\Route;
 use Thoughtco\Shopify\Http\Controllers\Actions\AddressController;
+use Thoughtco\Shopify\Http\Controllers\Actions\BuyerIdentityController;
 use Thoughtco\Shopify\Http\Controllers\Actions\VariantsController;
 use Thoughtco\Shopify\Http\Controllers\Webhooks;
 use Thoughtco\Shopify\Http\Middleware\VerifyShopifyHeaders;
@@ -21,6 +22,10 @@ Route::name('shopify.')
                 Route::delete('{id}', [AddressController::class, 'destroy'])
                     ->name('address.destroy');
             });
+
+        Route::get('buyer', BuyerIdentityController::class)
+            ->middleware('throttle:60,1')
+            ->name('buyer');
 
         Route::get('variants/{product}', [VariantsController::class, 'fetch'])
             ->name('variants.fetch');

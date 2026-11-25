@@ -1,8 +1,9 @@
-import { addLines, getOrCreateCart, removeLine, setCartAttributes, setCartNote, updateBuyerCountry, updateLineQuantity } from './cart.js';
+import { addLines, getBuyerIdentity, getOrCreateCart, removeLine, setCartAttributes, setCartNote, updateBuyerCountry, updateBuyerIdentity, updateLineQuantity } from './cart.js';
 import { cartStorageKey, formatMoney } from './money.js';
 
 const createStore = (Alpine) => {
     Alpine.store('statamic.shopify.cart', {
+        buyerIdentityCartId: null,
         cartId: null,
         checkoutUrl: '',
         currencyCode: null,
@@ -31,6 +32,39 @@ const createStore = (Alpine) => {
                     }
                 }
             });
+        },
+
+        // shopifyConfig.buyerIdentity: pre-fill checkout for a logged in customer, once per cart
+        async applyBuyerIdentity() {
+            const key = cartStorageKey() + ':buyer';
+
+            if (window.shopifyConfig?.buyerIdentity !== true || ! this.cartId || this.buyerIdentityCartId === this.cartId) {
+                return;
+            }
+
+            const cartId = this.buyerIdentityCartId = this.cartId;
+
+            try {
+                if (localStorage.getItem(key) === cartId) {
+                    return;
+                }
+            } catch (error) {}
+
+            const identity = await getBuyerIdentity();
+
+            if (! identity) {
+                return;
+            }
+
+            const response = await updateBuyerIdentity(cartId, identity);
+
+            if (response) {
+                try {
+                    localStorage.setItem(key, cartId);
+                } catch (error) {}
+
+                this.updateFromResponse(response);
+            }
         },
 
         formatCurrency(amount, currencyCode = null) {
@@ -102,6 +136,8 @@ const createStore = (Alpine) => {
             this.checkoutUrl = checkout.checkoutUrl;
 
             localStorage.setItem(cartStorageKey(), this.cartId);
+
+            this.applyBuyerIdentity();
         }
     });
 }

@@ -252,14 +252,69 @@ const updateBuyerCountry = async (cartId, countryCode) => {
     return (await run('cartBuyerIdentityUpdate', query, { cartId, buyerIdentity: { countryCode } }))?.cart;
 };
 
+/**
+ * Set who's buying (email, phone, countryCode, deliveryAddressPreferences), so
+ * Shopify's checkout is pre-filled. In markets mode the cart stays in the page's
+ * market country.
+ */
+const updateBuyerIdentity = async (cartId, buyerIdentity) => {
+    const query = operation('mutation', 'cartBuyerIdentityUpdate', ['$cartId: ID!', '$buyerIdentity: CartBuyerIdentityInput!'], `
+      cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+        cart {
+          ${cartQuery}
+        }
+        ${userErrors}
+      }`);
+
+    const country = marketCountry();
+
+    return (await run('cartBuyerIdentityUpdate', query, {
+        cartId,
+        buyerIdentity: country ? { ...buyerIdentity, countryCode: country } : buyerIdentity,
+    }))?.cart;
+};
+
+/**
+ * The logged in customer's buyer identity from the site (shopify.cart.buyer_identity),
+ * or null for guests, users not linked to a Shopify customer, or when it's off.
+ */
+const getBuyerIdentity = async () => {
+    const config = (typeof window !== 'undefined' ? window.shopifyConfig : null) ?? {};
+
+    if (config.buyerIdentity !== true || typeof fetch !== 'function') {
+        return null;
+    }
+
+    const params = config.store ? `?store=${encodeURIComponent(config.store)}` : '';
+
+    try {
+        const response = await fetch((config.buyerIdentityUrl ?? '/!/shopify/buyer') + params, {
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' },
+        });
+
+        if (! response.ok || response.status === 204) {
+            return null;
+        }
+
+        const identity = await response.json();
+
+        return identity && Object.keys(identity).length ? identity : null;
+    } catch (error) {
+        return null;
+    }
+};
+
 export {
     addLines,
     createFreshCart,
+    getBuyerIdentity,
     getExistingCart,
     getOrCreateCart,
     removeLine,
     setCartAttributes,
     setCartNote,
     updateBuyerCountry,
+    updateBuyerIdentity,
     updateLineQuantity,
 };

@@ -136,6 +136,12 @@ class Shopify extends Tags
             ]);
         }
 
+        if (config('shopify.cart.buyer_identity')) {
+            // only the endpoint: the buyer's details are fetched, never put in a (cached) page
+            $config['buyerIdentity'] = true;
+            $config['buyerIdentityUrl'] = route('statamic.shopify.buyer', [], false);
+        }
+
         if (Money::usesIntl()) {
             $config['moneyFormat'] = 'intl';
             $config['locale'] = Money::locale();
