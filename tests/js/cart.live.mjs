@@ -141,3 +141,17 @@ test('keeps a discount code that does not apply and reports an unknown gift card
     assert.equal(await cart.addGiftCardCodes(current.id, ['NOTAREALGIFTCARD']), undefined, 'cartGiftCardCodesAdd');
     assert.equal(errors[0]?.operation, 'cartGiftCardCodesAdd', 'an unknown gift card is reported');
 });
+
+test('sets the buyer identity and delivery address', { skip: ! configured && 'no .env.live' }, async () => {
+    window.shopifyConfig.country = undefined;
+    errors.length = 0;
+
+    let current = await cart.createFreshCart([{ merchandiseId: await firstVariantId(), quantity: 1 }]);
+
+    current = await cart.updateBuyerIdentity(current.id, { email: 'buyer@example.com', countryCode: 'GB' });
+    assert.equal(current?.buyerIdentity?.countryCode, 'GB', 'cartBuyerIdentityUpdate');
+
+    current = await cart.setDeliveryAddress(current.id, { firstName: 'Sam', lastName: 'Shopper', address1: '1 High Street', city: 'London', countryCode: 'GB', zip: 'N1 1AA' });
+    assert.ok(current?.id, 'cartDeliveryAddressesReplace');
+    assert.deepEqual(errors, []);
+});
