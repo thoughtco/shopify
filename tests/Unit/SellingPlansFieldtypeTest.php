@@ -4,7 +4,6 @@ namespace Thoughtco\Shopify\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use Statamic\Facades\Blink;
 use Statamic\Fields\Field;
 use Thoughtco\Shopify\Fieldtypes\SellingPlans;
 use Thoughtco\Shopify\Tests\TestCase;
@@ -39,9 +38,6 @@ class SellingPlansFieldtypeTest extends TestCase
     #[Test]
     public function the_product_blueprint_shows_selling_plans_read_only_on_the_details_tab()
     {
-        config()->set('shopify.selling_plans', true);
-        Blink::flush();
-
         $field = Facades\Collection::find('products')->entryBlueprint()->field('selling_plan_groups');
 
         $this->assertInstanceOf(SellingPlans::class, $field->fieldtype());

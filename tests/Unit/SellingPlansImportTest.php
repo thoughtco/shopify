@@ -4,15 +4,13 @@ namespace Thoughtco\Shopify\Tests\Unit;
 
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
-use Statamic\Events\EntryBlueprintFound;
 use Statamic\Facades;
-use Statamic\Facades\Blink;
 use Thoughtco\Shopify\Clients\Graphql;
 use Thoughtco\Shopify\Clients\HttpResponse;
 use Thoughtco\Shopify\Jobs\ImportSingleProductJob;
-use Thoughtco\Shopify\Listeners;
 use Thoughtco\Shopify\Support\SellingPlans;
 use Thoughtco\Shopify\Tests\TestCase;
+use Thoughtco\Shopify\UpdateScripts;
 
 class SellingPlansImportTest extends TestCase
 {
@@ -179,42 +177,41 @@ class SellingPlansImportTest extends TestCase
     }
 
     #[Test]
-    public function the_subscriptions_section_is_added_to_the_details_tab_when_selling_plans_are_enabled()
+    public function the_update_script_adds_missing_selling_plan_fields()
     {
-        config()->set('shopify.selling_plans', true);
-        Blink::flush(); // the blueprint found event fires once per request
-
-        $sections = collect(Facades\Collection::find('products')->entryBlueprint()->contents()['tabs']['shopify']['sections']);
-
-        $this->assertSame(['requires_selling_plan', 'selling_plan_groups'], array_column($sections->firstWhere('display', 'Subscriptions')['fields'], 'handle'));
-        $this->assertSame('Shopify record', $sections->last()['display']);
-        $this->assertTrue(Facades\Collection::find('variants')->entryBlueprint()->hasField('selling_plan_ids'));
-
-        // the blueprint files are untouched
-        $this->assertStringNotContainsString('selling_plan', file_get_contents(__DIR__.'/../../resources/blueprints/product.yaml'));
-    }
-
-    #[Test]
-    public function the_subscriptions_section_is_only_added_once()
-    {
-        config()->set('shopify.selling_plans', true);
-        Blink::flush(); // the blueprint found event fires once per request
-
         $blueprint = Facades\Collection::find('products')->entryBlueprint();
+        $contents = $blueprint->contents();
+        $contents['tabs']['shopify']['sections'] = collect($contents['tabs']['shopify']['sections'])
+            ->reject(fn ($section) => ($section['display'] ?? null) === 'Subscriptions')
+            ->values()
+            ->all();
+        $blueprint->setContents($contents)->save();
 
-        (new Listeners\AddSellingPlanFieldsToBlueprints)->handle(new EntryBlueprintFound($blueprint));
-
-        $this->assertSame(1, collect($blueprint->contents()['tabs']['shopify']['sections'])->where('display', 'Subscriptions')->count());
-    }
-
-    #[Test]
-    public function there_is_no_subscriptions_section_when_selling_plans_are_disabled()
-    {
-        config()->set('shopify.selling_plans', false);
-        Blink::flush();
+        $variantBlueprint = Facades\Collection::find('variants')->entryBlueprint();
+        $variantContents = $variantBlueprint->contents();
+        $tab = array_key_first($variantContents['tabs']);
+        $variantContents['tabs'][$tab]['sections'][0]['fields'] = collect($variantContents['tabs'][$tab]['sections'][0]['fields'])
+            ->reject(fn ($field) => $field['handle'] === 'selling_plan_ids')
+            ->values()
+            ->all();
+        $variantBlueprint->setContents($variantContents)->save();
 
         $this->assertFalse(Facades\Collection::find('products')->entryBlueprint()->hasField('selling_plan_groups'));
         $this->assertFalse(Facades\Collection::find('variants')->entryBlueprint()->hasField('selling_plan_ids'));
+
+        (new UpdateScripts\AddSellingPlanFieldsToBlueprints('thoughtco/shopify'))->update();
+        (new UpdateScripts\AddSellingPlanFieldsToBlueprints('thoughtco/shopify'))->update();
+
+        $blueprint = Facades\Collection::find('products')->entryBlueprint();
+        $sections = collect($blueprint->contents()['tabs']['shopify']['sections'])
+            ->mapWithKeys(fn ($section) => [$section['display'] => array_column($section['fields'], 'handle')]);
+
+        $this->assertSame(['requires_selling_plan', 'selling_plan_groups'], $sections['Subscriptions']);
+        $this->assertSame(1, collect($blueprint->contents()['tabs']['shopify']['sections'])->where('display', 'Subscriptions')->count());
+
+        $variantBlueprint = Facades\Collection::find('variants')->entryBlueprint();
+        $this->assertTrue($variantBlueprint->hasField('selling_plan_ids'));
+        $this->assertCount(1, collect($variantBlueprint->fields()->all())->filter(fn ($field, $handle) => $handle === 'selling_plan_ids'));
     }
 
     private function mockGraphql(bool $withPlans = true): MockInterface
