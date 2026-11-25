@@ -120,3 +120,24 @@ test('reports failures with a shopify.cart.error event and returns nothing', { s
     assert.equal(errors.length, 1);
     assert.equal(errors[0].operation, 'cartLinesAdd');
 });
+
+test('keeps a discount code that does not apply and reports an unknown gift card', { skip: ! configured && 'no .env.live' }, async () => {
+    window.shopifyConfig.country = undefined;
+    errors.length = 0;
+
+    const variantId = await firstVariantId();
+    let current = await cart.createFreshCart([{ merchandiseId: variantId, quantity: 1 }]);
+    assert.ok(current.cost.subtotalAmount.amount, 'the cart returns its subtotal');
+    assert.ok(Array.isArray(current.lines.edges[0].node.discountAllocations), 'lines return their discounts');
+    assert.ok(Array.isArray(current.discountAllocations), 'the cart returns its order-level discounts');
+
+    current = await cart.updateDiscountCodes(current.id, ['NOT-A-REAL-CODE-123']);
+    assert.deepEqual(current.discountCodes, [{ code: 'NOT-A-REAL-CODE-123', applicable: false }], 'cartDiscountCodesUpdate');
+    assert.deepEqual(errors, [], 'a code that does not apply is not an error');
+
+    current = await cart.updateDiscountCodes(current.id, []);
+    assert.deepEqual(current.discountCodes, [], 'an empty list removes the codes');
+
+    assert.equal(await cart.addGiftCardCodes(current.id, ['NOTAREALGIFTCARD']), undefined, 'cartGiftCardCodesAdd');
+    assert.equal(errors[0]?.operation, 'cartGiftCardCodesAdd', 'an unknown gift card is reported');
+});
