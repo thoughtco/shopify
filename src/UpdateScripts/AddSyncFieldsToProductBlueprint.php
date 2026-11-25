@@ -42,7 +42,7 @@ class AddSyncFieldsToProductBlueprint extends UpdateScript
             $sections = collect($addonTab['sections'])
                 ->map(fn ($section) => array_merge($section, [
                     'fields' => collect($section['fields'])
-                        ->filter(fn ($field) => in_array($field['handle'], self::FIELDS) && ! $blueprint->hasField($field['handle']))
+                        ->filter(fn ($field) => in_array($field['handle'], static::FIELDS) && ! $blueprint->hasField($field['handle']))
                         ->values()
                         ->all(),
                 ]))
@@ -62,6 +62,11 @@ class AddSyncFieldsToProductBlueprint extends UpdateScript
             $blueprint->setContents($contents)->save();
         });
 
-        $this->console()?->info('Shopify pricing, inventory and last imported fields have been added to your product blueprint.');
+        $this->console()?->info($this->message());
+    }
+
+    protected function message(): string
+    {
+        return 'Shopify pricing, inventory and last imported fields have been added to your product blueprint.';
     }
 }

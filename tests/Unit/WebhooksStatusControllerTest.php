@@ -116,7 +116,7 @@ class WebhooksStatusControllerTest extends TestCase
 
         $expected = $response->json('expected');
 
-        $this->assertSame(array_map(fn ($topic) => $topic->value, WebhookTopic::cases()), array_keys($expected));
+        $this->assertSame(array_map(fn ($topic) => $topic->value, WebhookTopic::registered()), array_keys($expected));
         $this->assertArrayHasKey('ORDERS_CANCELLED', $expected);
         $this->assertArrayHasKey('REFUNDS_CREATE', $expected);
         $this->assertArrayHasKey('INVENTORY_LEVELS_UPDATE', $expected);

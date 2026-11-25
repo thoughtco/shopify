@@ -39,7 +39,7 @@ class WebhooksRegisterCommandTest extends TestCase
      */
     private function existingWebhooksResponse(array $extra = []): string
     {
-        $nodes = collect(WebhookTopic::cases())->map(fn ($topic) => [
+        $nodes = collect(WebhookTopic::registered())->map(fn ($topic) => [
             'id' => 'gid://shopify/WebhookSubscription/'.$topic->value,
             'topic' => $topic->value,
             'endpoint' => ['callbackUrl' => $topic->callbackUrl()],
@@ -145,7 +145,7 @@ class WebhooksRegisterCommandTest extends TestCase
             // Subsequent calls: a create mutation per topic
             $mock->shouldReceive('query')
                 ->withArgs(fn ($q) => str_contains($q['query'], 'webhookSubscriptionCreate'))
-                ->times(count(WebhookTopic::cases()))
+                ->times(count(WebhookTopic::registered()))
                 ->andReturn(new HttpResponse(status: 200, body: $this->webhookCreatedResponse()));
         });
 
@@ -181,7 +181,7 @@ class WebhooksRegisterCommandTest extends TestCase
             // Only the remaining topics should be created
             $mock->shouldReceive('query')
                 ->withArgs(fn ($q) => str_contains($q['query'], 'webhookSubscriptionCreate'))
-                ->times(count(WebhookTopic::cases()) - 1)
+                ->times(count(WebhookTopic::registered()) - 1)
                 ->andReturn(new HttpResponse(status: 200, body: $this->webhookCreatedResponse()));
         });
 
@@ -211,7 +211,7 @@ class WebhooksRegisterCommandTest extends TestCase
 
             $mock->shouldReceive('query')
                 ->withArgs(fn ($q) => str_contains($q['query'], 'webhookSubscriptionCreate'))
-                ->times(count(WebhookTopic::cases()))
+                ->times(count(WebhookTopic::registered()))
                 ->andReturn(new HttpResponse(status: 200, body: $errorResponse));
         });
 

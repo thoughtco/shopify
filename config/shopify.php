@@ -37,6 +37,13 @@ return [
     'storefront_token' => env('SHOPIFY_STOREFRONT_TOKEN'),
 
     /**
+     * Optional private Storefront API token, used (instead of the public token) for
+     * server-side Storefront requests, e.g. selling plan prices per market. Never
+     * output to the browser.
+     */
+    'storefront_private_token' => env('SHOPIFY_STOREFRONT_PRIVATE_TOKEN'),
+
+    /**
      * If using WebHooks make sure you have added the secret that they are signed with here
      */
     'webhook_secret' => env('SHOPIFY_WEBHOOK_SECRET'),
@@ -178,6 +185,13 @@ return [
      * that have already been imported (run shopify:import:collections).
      */
     'import_missing_collections' => env('SHOPIFY_IMPORT_MISSING_COLLECTIONS', true),
+
+    /**
+     * Import selling plans (subscriptions and other purchase options from apps such as
+     * Shopify Subscriptions or Recharge) onto products and variants. Needs the
+     * read_purchase_options Admin API scope: enable it once the app has that scope.
+     */
+    'selling_plans' => env('SHOPIFY_SELLING_PLANS', false),
 
     /**
      * The activity log records every webhook received and every import run (from

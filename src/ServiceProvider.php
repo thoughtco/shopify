@@ -16,6 +16,7 @@ use Thoughtco\Shopify\Activity\FileActivityRepository;
 use Thoughtco\Shopify\Clients\Graphql;
 use Thoughtco\Shopify\Contracts\ActivityRepository;
 use Thoughtco\Shopify\Support\LegacyNamespace;
+use Thoughtco\Shopify\Support\SellingPlans;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -38,6 +39,7 @@ class ServiceProvider extends AddonServiceProvider
     protected $fieldtypes = [
         Fieldtypes\Variants::class,
         Fieldtypes\DisabledText::class,
+        Fieldtypes\SellingPlans::class,
     ];
 
     protected $listen = [
@@ -98,6 +100,9 @@ class ServiceProvider extends AddonServiceProvider
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'shopify');
 
         Statamic::booted(function () {
+            // read by the CP's `shopifySellingPlansEnabled` field condition (resources/js/cp.js)
+            Statamic::provideToScript(['shopify' => ['sellingPlans' => SellingPlans::enabled()]]);
+
             $this->setShopifyApiConfig();
             $this->publishAssets();
             $this->bootPermissions();
