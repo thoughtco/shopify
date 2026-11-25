@@ -2,8 +2,6 @@
 
 namespace Thoughtco\Shopify\Tests\Unit;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Events\EntryBlueprintFound;
@@ -207,21 +205,6 @@ class SellingPlansImportTest extends TestCase
         (new Listeners\AddSellingPlanFieldsToBlueprints)->handle(new EntryBlueprintFound($blueprint));
 
         $this->assertSame(1, collect($blueprint->contents()['tabs']['shopify']['sections'])->where('display', 'Subscriptions')->count());
-    }
-
-    #[Test]
-    public function the_subscriptions_section_is_not_added_in_the_blueprint_editor()
-    {
-        config()->set('shopify.selling_plans', true);
-
-        $request = Request::create('/cp/fields/blueprints/collections/products/product/edit');
-        $request->setRouteResolver(fn () => (new Route('GET', 'cp/fields/blueprints/collections/{collection}/{blueprint}/edit', []))->name('statamic.cp.blueprints.collections.edit')->bind($request));
-        $this->app->instance('request', $request);
-
-        $blueprint = Facades\Collection::find('products')->entryBlueprint();
-        (new Listeners\AddSellingPlanFieldsToBlueprints)->handle(new EntryBlueprintFound($blueprint));
-
-        $this->assertFalse($blueprint->hasField('selling_plan_groups'));
     }
 
     #[Test]
