@@ -8,6 +8,7 @@ use Statamic\Facades\Collection;
 use Statamic\Facades\Entry;
 use Statamic\Support\Arr;
 use Thoughtco\Shopify\Actions\ParseMetafields;
+use Thoughtco\Shopify\Clients\Graphql;
 use Thoughtco\Shopify\Support\StoreConfig;
 use Thoughtco\Shopify\Traits\ResolvesMetaobjects;
 use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
@@ -19,25 +20,50 @@ class ShopifyImportMetaobjects extends Command
     use ThrottlesShopifyRequests;
 
     protected $signature = 'shopify:import:metaobjects
-        {type : The metaobject definition type, e.g. designer}
-        {--collection= : The Statamic collection to import into (defaults to shopify.metaobjects.collection)}
+        {type? : The metaobject definition type, e.g. designer (defaults to every type in shopify.metaobjects.collections)}
+        {--collection= : The Statamic collection to import into (defaults to the type\'s collection in shopify.metaobjects.collections, else the type)}
         {--store= : The handle of a specific store to import from}';
 
     protected $description = 'Import all Shopify metaobjects of a definition type into a Statamic collection';
 
     public function handle()
     {
-        $handle = $this->option('collection') ?: config('shopify.metaobjects.collection', 'metaobjects');
+        $collections = config('shopify.metaobjects.collections', []);
 
-        if (! $collection = Collection::findByHandle($handle)) {
-            $this->error("The [{$handle}] collection doesn't exist. Create it first, or pass --collection.");
+        if ($type = $this->argument('type')) {
+            $collections = [$type => $this->option('collection') ?: ($collections[$type] ?? $type)];
+        } elseif ($this->option('collection')) {
+            $this->error('Pass a type to import into --collection.');
 
             return self::FAILURE;
         }
 
+        if (! $collections) {
+            $this->error('Pass a type, or map types to collections in shopify.metaobjects.collections.');
+
+            return self::FAILURE;
+        }
+
+        foreach ($collections as $type => $handle) {
+            if (! Collection::findByHandle($handle)) {
+                $this->error("The [{$handle}] collection for [{$type}] metaobjects doesn't exist. Create it first, or pass --collection.");
+
+                return self::FAILURE;
+            }
+        }
+
         $graphql = StoreConfig::clientFor($this->option('store'));
+
+        foreach ($collections as $type => $handle) {
+            $this->importType($graphql, $type, $handle);
+        }
+
+        return self::SUCCESS;
+    }
+
+    private function importType(Graphql $graphql, string $type, string $collection): void
+    {
         $parser = app(ParseMetafields::class);
-        $type = $this->argument('type');
         $selection = $this->metaobjectSelection();
 
         $query = <<<GQL
@@ -64,16 +90,14 @@ class ShopifyImportMetaobjects extends Command
             $page = Arr::get($response->getDecodedBody(), 'data.metaobjects', []);
 
             foreach ($page['nodes'] ?? [] as $metaobject) {
-                $this->saveMetaobject($collection->handle(), $metaobject, $parser);
+                $this->saveMetaobject($collection, $metaobject, $parser);
                 $count++;
             }
 
             $cursor = Arr::get($page, 'pageInfo.endCursor');
         } while (Arr::get($page, 'pageInfo.hasNextPage') && $cursor);
 
-        $this->info("Imported {$count} [{$type}] metaobjects into the [{$collection->handle()}] collection");
-
-        return self::SUCCESS;
+        $this->info("Imported {$count} [{$type}] metaobjects into the [{$collection}] collection");
     }
 
     private function saveMetaobject(string $collection, array $metaobject, ParseMetafields $parser): void

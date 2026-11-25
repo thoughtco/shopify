@@ -205,11 +205,13 @@ class MetaobjectsTest extends TestCase
     }
 
     #[Test]
-    public function imports_all_metaobjects_of_a_type_into_a_collection()
+    public function imports_all_metaobjects_of_a_type_into_its_mapped_collection()
     {
-        Facades\Collection::make('metaobjects')->save();
+        config()->set('shopify.metaobjects.collections', ['designer' => 'designers']);
 
-        Facades\Entry::make()->collection('metaobjects')->slug('old-handle')->data(['metaobject_id' => 'gid://shopify/Metaobject/1', 'title' => 'Old'])->save();
+        Facades\Collection::make('designers')->save();
+
+        Facades\Entry::make()->collection('designers')->slug('old-handle')->data(['metaobject_id' => 'gid://shopify/Metaobject/1', 'title' => 'Old'])->save();
 
         $this->mock(Graphql::class, function (MockInterface $mock) {
             $mock->shouldReceive('query')
@@ -229,7 +231,7 @@ class MetaobjectsTest extends TestCase
 
         $this->artisan('shopify:import:metaobjects', ['type' => 'designer'])->assertSuccessful();
 
-        $entries = Facades\Entry::whereCollection('metaobjects')->sortBy('slug')->values();
+        $entries = Facades\Entry::whereCollection('designers')->sortBy('slug')->values();
         $this->assertCount(2, $entries);
 
         $ada = $entries[0];
@@ -242,9 +244,65 @@ class MetaobjectsTest extends TestCase
     }
 
     #[Test]
+    public function imports_unmapped_types_into_a_collection_named_after_the_type()
+    {
+        Facades\Collection::make('designer')->save();
+
+        $this->mockMetaobjectPages(['designer' => [$this->designer()]]);
+
+        $this->artisan('shopify:import:metaobjects', ['type' => 'designer'])->assertSuccessful();
+
+        $this->assertSame(['ada'], Facades\Entry::whereCollection('designer')->map->slug()->all());
+    }
+
+    #[Test]
+    public function imports_every_mapped_type_into_its_own_collection_without_a_type()
+    {
+        config()->set('shopify.metaobjects.collections', ['designer' => 'designers', 'studio' => 'studios']);
+
+        Facades\Collection::make('designers')->save();
+        Facades\Collection::make('studios')->save();
+
+        // handles are only unique per type, so both are "ada"
+        $this->mockMetaobjectPages([
+            'designer' => [$this->designer()],
+            'studio' => [array_merge($this->designer(), ['id' => 'gid://shopify/Metaobject/9', 'type' => 'studio', 'displayName' => 'Ada Studio'])],
+        ]);
+
+        $this->artisan('shopify:import:metaobjects')->assertSuccessful();
+
+        $this->assertSame('Ada', Facades\Entry::whereCollection('designers')->first()->get('title'));
+        $this->assertSame('Ada Studio', Facades\Entry::whereCollection('studios')->first()->get('title'));
+    }
+
+    #[Test]
     public function metaobjects_command_fails_without_the_collection()
     {
+        config()->set('shopify.metaobjects.collections', ['designer' => 'designers']);
+
         $this->artisan('shopify:import:metaobjects', ['type' => 'designer'])->assertFailed();
+        $this->artisan('shopify:import:metaobjects', ['type' => 'studio'])->assertFailed();
+    }
+
+    #[Test]
+    public function metaobjects_command_fails_without_a_type_or_mapping()
+    {
+        $this->artisan('shopify:import:metaobjects')->assertFailed();
+        $this->artisan('shopify:import:metaobjects', ['--collection' => 'designers'])->assertFailed();
+    }
+
+    private function mockMetaobjectPages(array $nodesByType): void
+    {
+        $this->mock(Graphql::class, function (MockInterface $mock) use ($nodesByType) {
+            foreach ($nodesByType as $type => $nodes) {
+                $mock->shouldReceive('query')
+                    ->withArgs(fn ($params) => str_contains($params['query'], 'metaobjects(type:') && $params['variables']['type'] === $type)
+                    ->andReturn(new HttpResponse(status: 200, body: json_encode(['data' => ['metaobjects' => [
+                        'nodes' => $nodes,
+                        'pageInfo' => ['hasNextPage' => false, 'endCursor' => null],
+                    ]]])));
+            }
+        });
     }
 
     private function makeProductCollections(): void

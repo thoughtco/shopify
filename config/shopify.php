@@ -128,12 +128,14 @@ return [
 
     /**
      * Metaobject references in metafields are fetched and imported as their fields
-     * (requires the read_metaobjects access scope). `collection` is where
-     * `php artisan shopify:import:metaobjects {type}` saves metaobjects.
+     * (requires the read_metaobjects access scope). `collections` maps each metaobject
+     * definition type to the Statamic collection `php artisan shopify:import:metaobjects`
+     * saves it into, e.g. ['designer' => 'designers']. Unmapped types use a collection
+     * with the same handle as the type.
      */
     'metaobjects' => [
         'resolve' => env('SHOPIFY_RESOLVE_METAOBJECTS', true),
-        'collection' => env('SHOPIFY_METAOBJECTS_COLLECTION', 'metaobjects'),
+        'collections' => [],
     ],
 
     /**
