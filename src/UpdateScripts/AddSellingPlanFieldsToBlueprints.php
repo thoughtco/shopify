@@ -17,7 +17,7 @@ class AddSellingPlanFieldsToBlueprints extends AddSyncFieldsToProductBlueprint
 
     public function shouldUpdate($newVersion, $oldVersion)
     {
-        return $this->isUpdatingTo('9.1.0');
+        return $this->isUpdatingTo('9.2.0');
     }
 
     public function update()
