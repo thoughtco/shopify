@@ -283,6 +283,12 @@ class ImportSingleProductJob implements ShouldQueue
         $entry->slug($this->data['handle']);
 
         if (SellingPlans::enabled()) {
+            $this->data = SellingPlans::fetchRemainingPages(
+                $this->data,
+                "gid://shopify/Product/{$this->productId}",
+                fn (string $query, array $variables) => Arr::get($this->queryWithThrottle($graphql, ['query' => $query, 'variables' => $variables])->getDecodedBody() ?? [], 'data', []),
+            );
+
             $this->sellingPlanGroups = SellingPlans::groupsFromGraphql($this->data);
             $data = array_merge($data, $this->sellingPlanData($entry));
 

@@ -35,7 +35,7 @@ class SellingPlansImportTest extends TestCase
         ImportSingleProductJob::dispatch(108828309);
 
         $this->assertStringContainsString('requiresSellingPlan', $this->queries[0]);
-        $this->assertStringContainsString('sellingPlanGroups(first: 20)', $this->queries[0]);
+        $this->assertStringContainsString('sellingPlanGroups(first: 10)', $this->queries[0]);
 
         $product = Facades\Entry::whereCollection('products')->first();
 
@@ -212,6 +212,69 @@ class SellingPlansImportTest extends TestCase
         $variantBlueprint = Facades\Collection::find('variants')->entryBlueprint();
         $this->assertTrue($variantBlueprint->hasField('selling_plan_ids'));
         $this->assertCount(1, collect($variantBlueprint->fields()->all())->filter(fn ($field, $handle) => $handle === 'selling_plan_ids'));
+    }
+
+    #[Test]
+    public function fetches_the_groups_plans_and_variant_groups_past_the_first_page()
+    {
+        $more = fn ($cursor) => ['hasNextPage' => true, 'endCursor' => $cursor];
+        $done = ['hasNextPage' => false, 'endCursor' => null];
+        $plan = fn ($id) => ['id' => "gid://shopify/SellingPlan/{$id}", 'name' => "Plan {$id}", 'options' => [], 'pricingPolicies' => []];
+
+        $product = [
+            'sellingPlanGroups' => [
+                'nodes' => [['id' => 'gid://shopify/SellingPlanGroup/1', 'sellingPlans' => ['nodes' => [$plan(11)], 'pageInfo' => $more('p1')]]],
+                'pageInfo' => $more('g1'),
+            ],
+            'variants' => ['edges' => [
+                ['node' => ['id' => 'gid://shopify/ProductVariant/100', 'sellingPlanGroups' => ['nodes' => [['id' => 'gid://shopify/SellingPlanGroup/1']], 'pageInfo' => $more('v1')]]],
+                ['node' => ['id' => 'gid://shopify/ProductVariant/101', 'sellingPlanGroups' => ['nodes' => [['id' => 'gid://shopify/SellingPlanGroup/1']], 'pageInfo' => $done]]],
+            ]],
+        ];
+
+        $calls = [];
+        $pages = [
+            'gid://shopify/Product/1:g1' => ['product' => ['sellingPlanGroups' => [
+                'nodes' => [['id' => 'gid://shopify/SellingPlanGroup/2', 'sellingPlans' => ['nodes' => [$plan(21)], 'pageInfo' => $done]]],
+                'pageInfo' => $done,
+            ]]],
+            'gid://shopify/SellingPlanGroup/1:p1' => ['node' => ['sellingPlans' => ['nodes' => [$plan(12)], 'pageInfo' => $more('p2')]]],
+            'gid://shopify/SellingPlanGroup/1:p2' => ['node' => ['sellingPlans' => ['nodes' => [$plan(13)], 'pageInfo' => $done]]],
+            'gid://shopify/ProductVariant/100:v1' => ['node' => ['sellingPlanGroups' => ['nodes' => [['id' => 'gid://shopify/SellingPlanGroup/2']], 'pageInfo' => $done]]],
+        ];
+
+        $product = SellingPlans::fetchRemainingPages($product, 'gid://shopify/Product/1', function ($query, $variables) use (&$calls, $pages) {
+            $calls[] = $variables['id'].':'.$variables['cursor'];
+
+            return $pages[$variables['id'].':'.$variables['cursor']];
+        });
+
+        $this->assertSame(array_keys($pages), $calls);
+
+        $groups = SellingPlans::groupsFromGraphql($product);
+        $this->assertSame(['gid://shopify/SellingPlanGroup/1', 'gid://shopify/SellingPlanGroup/2'], array_column($groups, 'id'));
+        $this->assertSame(['gid://shopify/SellingPlan/11', 'gid://shopify/SellingPlan/12', 'gid://shopify/SellingPlan/13'], array_column($groups[0]['selling_plans'], 'id'));
+
+        // the first variant is in both groups (the second from its next page), the other only in the first
+        $this->assertSame(
+            ['gid://shopify/SellingPlan/11', 'gid://shopify/SellingPlan/12', 'gid://shopify/SellingPlan/13', 'gid://shopify/SellingPlan/21'],
+            SellingPlans::variantPlanIds($product['variants']['edges'][0]['node'], $groups)
+        );
+        $this->assertSame(
+            ['gid://shopify/SellingPlan/11', 'gid://shopify/SellingPlan/12', 'gid://shopify/SellingPlan/13'],
+            SellingPlans::variantPlanIds($product['variants']['edges'][1]['node'], $groups)
+        );
+    }
+
+    #[Test]
+    public function makes_no_more_queries_when_everything_fits_on_the_first_page()
+    {
+        config()->set('shopify.selling_plans', true);
+        $this->mockGraphql();
+
+        ImportSingleProductJob::dispatch(108828309);
+
+        $this->assertCount(1, collect($this->queries)->filter(fn ($query) => str_contains($query, 'sellingPlanGroups')));
     }
 
     private function mockGraphql(bool $withPlans = true): MockInterface

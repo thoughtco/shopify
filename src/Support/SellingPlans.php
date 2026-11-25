@@ -2,6 +2,7 @@
 
 namespace Thoughtco\Shopify\Support;
 
+use Closure;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 use Thoughtco\Shopify\Clients\Storefront;
@@ -36,77 +37,165 @@ class SellingPlans
     }
 
     /**
+     * First page sizes in the import's queries. Kept small as the variant groups are
+     * per variant (up to 100 a page), so most of the query's cost; the rest are fetched
+     * by fetchRemainingPages().
+     */
+    public const GROUPS_PAGE = 10;
+
+    public const PLANS_PAGE = 10;
+
+    public const VARIANT_GROUPS_PAGE = 5;
+
+    /**
+     * Page size for the follow-up queries.
+     */
+    public const NEXT_PAGE = 50;
+
+    private const PAGE_INFO = 'pageInfo { hasNextPage endCursor }';
+
+    /**
      * Admin API fields for the product query.
      */
     public static function productQueryFields(): string
     {
-        return <<<'GQL'
-            requiresSellingPlan
-            sellingPlanGroups(first: 20) {
+        return 'requiresSellingPlan
+            sellingPlanGroups(first: '.self::GROUPS_PAGE.') {
               nodes {
-                id
-                name
-                appId
-                options
-                sellingPlans(first: 20) {
-                  nodes {
-                    id
-                    name
-                    description
-                    options
-                    deliveryPolicy {
-                      __typename
-                      ... on SellingPlanRecurringDeliveryPolicy {
-                        interval
-                        intervalCount
-                      }
-                    }
-                    pricingPolicies {
-                      __typename
-                      ... on SellingPlanFixedPricingPolicy {
-                        adjustmentType
-                        adjustmentValue {
-                          ... on MoneyV2 {
-                            amount
-                          }
-                          ... on SellingPlanPricingPolicyPercentageValue {
-                            percentage
-                          }
-                        }
-                      }
-                      ... on SellingPlanRecurringPricingPolicy {
-                        adjustmentType
-                        afterCycle
-                        adjustmentValue {
-                          ... on MoneyV2 {
-                            amount
-                          }
-                          ... on SellingPlanPricingPolicyPercentageValue {
-                            percentage
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                '.static::groupFields().'
               }
-            }
-            GQL;
+              '.self::PAGE_INFO.'
+            }';
     }
 
     /**
-     * Admin API fields for the variant query: the groups the variant is in. Kept small
-     * as it's per variant (up to 100 a page), so most of the query's cost.
+     * Admin API fields for the variant query: the groups the variant is in.
      */
     public static function variantQueryFields(): string
     {
-        return <<<'GQL'
-            sellingPlanGroups(first: 10) {
+        return 'sellingPlanGroups(first: '.self::VARIANT_GROUPS_PAGE.') {
               nodes {
                 id
               }
+              '.self::PAGE_INFO.'
+            }';
+    }
+
+    private static function groupFields(int $plans = self::PLANS_PAGE): string
+    {
+        return 'id
+            name
+            appId
+            options
+            sellingPlans(first: '.$plans.') {
+              nodes {
+                '.static::planFields().'
+              }
+              '.self::PAGE_INFO.'
+            }';
+    }
+
+    private static function planFields(): string
+    {
+        $adjustmentValue = 'adjustmentValue {
+              ... on MoneyV2 {
+                amount
+              }
+              ... on SellingPlanPricingPolicyPercentageValue {
+                percentage
+              }
+            }';
+
+        return 'id
+            name
+            description
+            options
+            deliveryPolicy {
+              __typename
+              ... on SellingPlanRecurringDeliveryPolicy {
+                interval
+                intervalCount
+              }
             }
-            GQL;
+            pricingPolicies {
+              __typename
+              ... on SellingPlanFixedPricingPolicy {
+                adjustmentType
+                '.$adjustmentValue.'
+              }
+              ... on SellingPlanRecurringPricingPolicy {
+                adjustmentType
+                afterCycle
+                '.$adjustmentValue.'
+              }
+            }';
+    }
+
+    /**
+     * Fetch the pages the import's query didn't include: the product's other groups,
+     * the other plans in each group, and the other groups each variant is in. `$query`
+     * runs a query and returns its `data` (the import's throttled client). Returns the
+     * product with every page merged in, in the shape the query returns.
+     */
+    public static function fetchRemainingPages(array $product, string $productGid, Closure $query): array
+    {
+        $groups = static::remainingNodes(
+            Arr::get($product, 'sellingPlanGroups', []),
+            'query ($id: ID!, $cursor: String) { product(id: $id) { sellingPlanGroups(first: '.self::NEXT_PAGE.', after: $cursor) { nodes { '.static::groupFields(self::NEXT_PAGE).' } '.self::PAGE_INFO.' } } }',
+            'product.sellingPlanGroups',
+            $productGid,
+            $query,
+        );
+
+        foreach ($groups as $index => $group) {
+            if (! isset($group['id'])) {
+                continue;
+            }
+
+            $groups[$index]['sellingPlans']['nodes'] = static::remainingNodes(
+                Arr::get($group, 'sellingPlans', []),
+                'query ($id: ID!, $cursor: String) { node(id: $id) { ... on SellingPlanGroup { sellingPlans(first: '.self::NEXT_PAGE.', after: $cursor) { nodes { '.static::planFields().' } '.self::PAGE_INFO.' } } } }',
+                'node.sellingPlans',
+                $group['id'],
+                $query,
+            );
+        }
+
+        $product['sellingPlanGroups']['nodes'] = $groups;
+
+        foreach (Arr::get($product, 'variants.edges', []) as $index => $edge) {
+            if (! $variantId = Arr::get($edge, 'node.id')) {
+                continue;
+            }
+
+            $product['variants']['edges'][$index]['node']['sellingPlanGroups']['nodes'] = static::remainingNodes(
+                Arr::get($edge, 'node.sellingPlanGroups', []),
+                'query ($id: ID!, $cursor: String) { node(id: $id) { ... on ProductVariant { sellingPlanGroups(first: '.self::NEXT_PAGE.', after: $cursor) { nodes { id } '.self::PAGE_INFO.' } } } }',
+                'node.sellingPlanGroups',
+                Str::startsWith((string) $variantId, 'gid://') ? $variantId : 'gid://shopify/ProductVariant/'.$variantId,
+                $query,
+            );
+        }
+
+        return $product;
+    }
+
+    /**
+     * A connection's nodes, with the pages after the first fetched one at a time.
+     */
+    private static function remainingNodes(array $connection, string $graphql, string $path, string $id, Closure $query): array
+    {
+        $nodes = $connection['nodes'] ?? [];
+        $pageInfo = $connection['pageInfo'] ?? [];
+
+        while (($pageInfo['hasNextPage'] ?? false) && ($pageInfo['endCursor'] ?? null)) {
+            $page = Arr::get($query($graphql, ['id' => $id, 'cursor' => $pageInfo['endCursor']]), $path, []);
+
+            $nodes = array_merge($nodes, $page['nodes'] ?? []);
+            $pageInfo = $page['pageInfo'] ?? [];
+        }
+
+        return $nodes;
     }
 
     /**
