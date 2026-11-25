@@ -150,14 +150,6 @@ sections:
           listable: hidden
           instructions_position: above
       -
-        handle: selling_plan_ids
-        field:
-          display: 'Selling Plans'
-          type: hidden
-          icon: hidden
-          listable: hidden
-          instructions_position: above
-      -
         handle: image
         field:
           mode: grid
