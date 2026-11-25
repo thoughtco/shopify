@@ -21,6 +21,12 @@ class AddSellingPlanFieldsToBlueprints
             return;
         }
 
+        // the blueprint editor loads blueprints through the same event: adding the
+        // section there would show it in the editor and save it into the blueprint
+        if (request()->routeIs('statamic.cp.blueprints.*')) {
+            return;
+        }
+
         match ($event->blueprint->namespace()) {
             'collections.'.config('shopify.collection_handle', 'products') => $this->addProductFields($event->blueprint),
             'collections.variants' => $event->blueprint->ensureField('selling_plan_ids', [
