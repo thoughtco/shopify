@@ -24,8 +24,8 @@ enum WebhookTopic: string
     case SellingPlanGroupsDelete = 'SELLING_PLAN_GROUPS_DELETE';
 
     /**
-     * The topics to subscribe to: selling plan topics need the read_purchase_options
-     * scope, so are only subscribed to when selling plans are imported.
+     * The topics to subscribe to: the selling plan group topics only when selling plans
+     * are imported, as there's nothing to update otherwise.
      *
      * @return array<self>
      */

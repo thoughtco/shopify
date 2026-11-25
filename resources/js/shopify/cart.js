@@ -44,6 +44,10 @@ const cartQuery = `
               sellingPlan {
                 id
                 name
+                options {
+                  name
+                  value
+                }
               }
               priceAdjustments {
                 price {

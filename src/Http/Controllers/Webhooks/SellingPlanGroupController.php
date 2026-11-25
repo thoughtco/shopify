@@ -5,6 +5,7 @@ namespace Thoughtco\Shopify\Http\Controllers\Webhooks;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Statamic\Facades\Entry;
 use Statamic\Support\Arr;
 use Thoughtco\Shopify\Activity\Activity;
@@ -44,14 +45,25 @@ class SellingPlanGroupController extends WebhooksController
             return response()->json([], 200);
         }
 
-        $payload = json_decode($request->getContent(), true);
-        $groupId = $payload['admin_graphql_api_id'] ?? (isset($payload['id']) ? 'gid://shopify/SellingPlanGroup/'.$payload['id'] : null);
+        $storeHandle = $this->storeHandle($request);
+        $groupId = data_get($data, 'admin_graphql_api_id') ?? (data_get($data, 'id') ? 'gid://shopify/SellingPlanGroup/'.data_get($data, 'id') : null);
 
-        $products = $this->importedProductsWithGroup($groupId, $this->storeHandle($request))
-            ->union($this->productsInPayload($payload));
+        // Shopify can send the same change more than once (separate deliveries, so not
+        // caught by the webhook id): only re-import for the first of identical payloads
+        if (! Cache::add('shopify.selling_plan_group.'.$topic.'.'.$storeHandle.'.'.md5($request->getContent()), true, now()->addMinutes(5))) {
+            $this->recordOutcome($request, ActivityStatus::Skipped, array_filter([
+                'resource_title' => data_get($data, 'name'),
+                'message' => 'The same change was received moments ago',
+            ]));
+
+            return response()->json([], 200);
+        }
+
+        $products = $this->importedProductsWithGroup($groupId, $storeHandle)
+            ->union($this->productsInPayload($data));
 
         foreach ($products as $productId => $title) {
-            ActivityLog::queueProductImport($productId, $this->storeHandle($request), Activity::SOURCE_WEBHOOK, attributes: [
+            ActivityLog::queueProductImport($productId, $storeHandle, Activity::SOURCE_WEBHOOK, attributes: [
                 'topic' => $topic,
                 'parent_id' => $this->activityId($request),
                 'resource_title' => $title,
@@ -59,7 +71,7 @@ class SellingPlanGroupController extends WebhooksController
         }
 
         $this->recordOutcome($request, $products->isNotEmpty() ? ActivityStatus::Updated : ActivityStatus::Skipped, array_filter([
-            'resource_title' => $payload['name'] ?? null,
+            'resource_title' => data_get($data, 'name'),
             'message' => $products->isNotEmpty()
                 ? "Queued {$products->count()} product update(s) for selling plans"
                 : 'No products use this selling plan group',
@@ -77,12 +89,12 @@ class SellingPlanGroupController extends WebhooksController
      *
      * @return Collection<int, ?string> titles keyed by product id
      */
-    private function productsInPayload(array $payload): Collection
+    private function productsInPayload(object $data): Collection
     {
-        return collect($payload['products'] ?? [])
-            ->map(fn ($product) => is_array($product) ? ($product['id'] ?? null) : $product)
-            ->merge(collect($payload['product_variants'] ?? [])->map(fn ($variant) => is_array($variant) ? ($variant['product_id'] ?? null) : null))
-            ->merge($payload['product_ids'] ?? [])
+        return collect(data_get($data, 'products', []))
+            ->map(fn ($product) => is_object($product) ? data_get($product, 'id') : $product)
+            ->merge(collect(data_get($data, 'product_variants', []))->map(fn ($variant) => is_object($variant) ? data_get($variant, 'product_id') : null))
+            ->merge(data_get($data, 'product_ids', []))
             ->map(fn ($id) => (int) (is_string($id) ? last(explode('/', $id)) : $id))
             ->filter()
             ->unique()

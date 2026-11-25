@@ -36,6 +36,21 @@ const sellingPlansForVariant = (groups = [], variant = null) => {
  * The pricing policy for the first delivery: the one with no after_cycle (or 0).
  * Later cycles (e.g. "10% off after the 3rd order") don't change the price shown.
  */
+/**
+ * A plan's label for a storefront: its option values (e.g. "Deliver every 2 months"),
+ * falling back to its name. Apps such as Shopify Subscriptions put the discount in the
+ * name in the shop's currency ("Deliver every 2 months, £3.00 off"), which is wrong in
+ * other markets. Takes imported plans (options as strings) and Storefront API plans
+ * (options as { name, value }). Mirrors SellingPlans::label().
+ */
+const sellingPlanLabel = (plan) => {
+    const options = (plan?.options ?? [])
+        .map(option => (typeof option === 'object' && option !== null ? option.value : option))
+        .filter(value => value !== null && value !== undefined && String(value) !== '');
+
+    return options.length ? options.join(', ') : (plan?.name ?? null);
+};
+
 const initialPricingPolicy = (plan) => (plan?.pricing_policies ?? []).find(policy => ! policy.after_cycle) ?? null;
 
 /**
@@ -96,6 +111,7 @@ const sellingPlanPrice = (plan, price, { inShopCurrency = true, variant = null, 
 };
 
 export {
+    sellingPlanLabel,
     allSellingPlans,
     initialPricingPolicy,
     marketSellingPlanPrice,

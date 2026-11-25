@@ -5,6 +5,7 @@ namespace Thoughtco\Shopify\UpdateScripts;
 use Statamic\Facades\Collection;
 use Statamic\Facades\YAML;
 use Statamic\Support\Arr;
+use Thoughtco\Shopify\Support\SellingPlans;
 
 /**
  * Add the selling plan fields to existing product blueprints (in the "Details" tab's
@@ -12,9 +13,7 @@ use Statamic\Support\Arr;
  */
 class AddSellingPlanFieldsToBlueprints extends AddSyncFieldsToProductBlueprint
 {
-    public const FIELDS = ['requires_selling_plan', 'selling_plan_groups'];
-
-    public const VARIANT_FIELDS = ['selling_plan_ids'];
+    public const FIELDS = SellingPlans::PRODUCT_FIELDS;
 
     public function shouldUpdate($newVersion, $oldVersion)
     {
@@ -30,7 +29,7 @@ class AddSellingPlanFieldsToBlueprints extends AddSyncFieldsToProductBlueprint
         }
 
         $fields = collect(Arr::get(YAML::file(__DIR__.'/../../resources/blueprints/variant.yaml')->parse(), 'sections.main.fields', []))
-            ->filter(fn ($field) => in_array($field['handle'], self::VARIANT_FIELDS))
+            ->filter(fn ($field) => in_array($field['handle'], SellingPlans::VARIANT_FIELDS))
             ->values();
 
         $collection->entryBlueprints()->each(function ($blueprint) use ($fields) {

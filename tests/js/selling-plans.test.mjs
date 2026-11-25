@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { allSellingPlans, initialPricingPolicy, marketSellingPlanPrice, sellingPlanPrice, sellingPlansForVariant } from '../../resources/js/shopify/selling-plans.js';
+import { allSellingPlans, initialPricingPolicy, marketSellingPlanPrice, sellingPlanLabel, sellingPlanPrice, sellingPlansForVariant } from '../../resources/js/shopify/selling-plans.js';
 
 const plan = (id, type, value, afterCycle = null) => ({
     id: `gid://shopify/SellingPlan/${id}`,
@@ -71,4 +71,10 @@ test('a market’s imported plan price is used for every adjustment type, with t
     // nothing stored for the plan: percentage maths, nothing for fixed types
     assert.equal(sellingPlanPrice(plan(3, 'PERCENTAGE', 10), '30.00', { inShopCurrency: false, variant, market: 'IE' }), 27);
     assert.equal(sellingPlanPrice(plan(4, 'PRICE', 5), '30.00', { inShopCurrency: false, variant, market: 'IE' }), null);
+});
+
+test('sellingPlanLabel uses the plan options, for imported and Storefront plans', () => {
+    assert.equal(sellingPlanLabel({ name: 'Deliver every 2 months, £3.00 off', options: ['Deliver every 2 months'] }), 'Deliver every 2 months');
+    assert.equal(sellingPlanLabel({ name: 'x', options: [{ name: 'Delivery every', value: 'Deliver every month' }] }), 'Deliver every month');
+    assert.equal(sellingPlanLabel({ name: 'Monthly', options: [] }), 'Monthly');
 });

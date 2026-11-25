@@ -1,6 +1,6 @@
 import { addLines, getOrCreateCart, removeLine, setCartAttributes, setCartNote, updateBuyerCountry, updateLineQuantity } from './cart.js';
 import { cartStorageKey, formatMoney } from './money.js';
-import { sellingPlanPrice, sellingPlansForVariant } from './selling-plans.js';
+import { sellingPlanLabel, sellingPlanPrice, sellingPlansForVariant } from './selling-plans.js';
 
 const createStore = (Alpine) => {
     Alpine.store('statamic.shopify.cart', {
@@ -91,8 +91,14 @@ const createStore = (Alpine) => {
                     currencyCode: currencyCode,
                     image: line.merchandise?.image?.url,
                     attributes: attrs,
-                    // subscriptions: the line's selling plan ({ id, name }), or null for one-off purchases
-                    sellingPlan: line.sellingPlanAllocation?.sellingPlan ?? null,
+                    // subscriptions: the line's selling plan ({ id, name, label }), or null for one-off purchases.
+                    // Show `label` (its options, e.g. "Deliver every 2 months"): the name can include the
+                    // discount in the shop's currency.
+                    sellingPlan: line.sellingPlanAllocation?.sellingPlan ? {
+                        id: line.sellingPlanAllocation.sellingPlan.id,
+                        name: line.sellingPlanAllocation.sellingPlan.name,
+                        label: sellingPlanLabel(line.sellingPlanAllocation.sellingPlan),
+                    } : null,
                 });
             }
 
@@ -155,6 +161,8 @@ const createData = (Alpine) => {
             if (this.purchaseType === 'subscription') {
                 this.sellingPlanId = this.availableSellingPlans()[0]?.id ?? null;
             }
+
+            this.$watch?.('selectedVariant', () => this.syncPurchaseType());
         },
 
         allOptionsSelected() {
@@ -267,6 +275,18 @@ const createData = (Alpine) => {
 
             if (this.purchaseType === 'subscription' && ! this.currentSellingPlan()) {
                 this.sellingPlanId = this.availableSellingPlans()[0]?.id ?? null;
+            }
+        },
+
+        /**
+         * Back to a one-off purchase when the selected variant has no plans (and the
+         * product doesn't require one), so it isn't added one-off while 'subscription'
+         * is still selected. Runs when the selected variant changes.
+         */
+        syncPurchaseType() {
+            if (this.purchaseType === 'subscription' && ! this.requiresSellingPlan && ! this.hasSellingPlans()) {
+                this.purchaseType = 'one_time';
+                this.sellingPlanId = null;
             }
         },
 

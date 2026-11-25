@@ -66,7 +66,7 @@ class SellingPlansFieldtypeTest extends TestCase
 
         $this->assertSame([
             'gid://shopify/SellingPlan/11' => ['delivery' => 'Every 2 weeks', 'pricing' => '10% off, 15.5% off after 3 deliveries'],
-            'gid://shopify/SellingPlan/12' => ['delivery' => 'One delivery', 'pricing' => 'Price 50.00'],
+            'gid://shopify/SellingPlan/12' => ['delivery' => 'One delivery', 'pricing' => 'Price £50.00'],
         ], $field->meta()['labels']);
 
         $this->assertSame($this->groups, $field->preProcess()->value());
@@ -78,7 +78,7 @@ class SellingPlansFieldtypeTest extends TestCase
     {
         $this->assertSame('Every month', SellingPlans::deliveryLabel(['recurring_deliveries' => true, 'interval' => 'MONTH', 'interval_count' => 1]));
         $this->assertSame('Recurring', SellingPlans::deliveryLabel(['recurring_deliveries' => true]));
-        $this->assertSame('5.00 off', SellingPlans::pricingLabel(['pricing_policies' => [['adjustment_type' => 'FIXED_AMOUNT', 'adjustment_value' => 5]]]));
+        $this->assertSame('£5.00 off', SellingPlans::pricingLabel(['pricing_policies' => [['adjustment_type' => 'FIXED_AMOUNT', 'adjustment_value' => 5]]]));
         $this->assertSame('Full price', SellingPlans::pricingLabel(['pricing_policies' => []]));
     }
 }

@@ -194,7 +194,7 @@ test('handleSubmit sends the selling plan and the cart maps the allocation', asy
                 id: 'line', quantity: 1, attributes: [],
                 cost: { amountPerQuantity: { amount: '18.00', currencyCode: 'GBP' } },
                 merchandise: { id: 'gid://shopify/ProductVariant/1', title: 'Default', product: { title: 'Coffee' } },
-                sellingPlanAllocation: { sellingPlan: { id: 'gid://shopify/SellingPlan/1', name: 'Monthly' }, priceAdjustments: [] },
+                sellingPlanAllocation: { sellingPlan: { id: 'gid://shopify/SellingPlan/1', name: 'Deliver every month, £3.00 off', options: [{ name: 'Delivery every', value: 'Deliver every month' }] }, priceAdjustments: [] },
             } }]) } }
             : { cartCreate: { userErrors: [], cart: cart() } };
 
@@ -212,11 +212,34 @@ test('handleSubmit sends the selling plan and the cart maps the allocation', asy
     const add = requests.find(request => request.query.includes('cartLinesAdd'));
     assert.match(add.query, /sellingPlanAllocation/);
     assert.equal(add.variables.lines[0].sellingPlanId, 'gid://shopify/SellingPlan/1');
-    assert.deepEqual(stores['statamic.shopify.cart'].lineItems[0].sellingPlan, { id: 'gid://shopify/SellingPlan/1', name: 'Monthly' });
+    assert.deepEqual(stores['statamic.shopify.cart'].lineItems[0].sellingPlan, { id: 'gid://shopify/SellingPlan/1', name: 'Deliver every month, £3.00 off', label: 'Deliver every month' });
 
     // one-off purchases don't send a plan
     product.setPurchaseType('one_time');
     await product.handleSubmit();
     const oneOff = requests.filter(request => request.query.includes('cartLinesAdd')).pop();
     assert.equal(oneOff.variables.lines[0].sellingPlanId, undefined);
+});
+
+test('shopifyProduct goes back to a one-off purchase when the selected variant has no plans', () => {
+    const product = components.shopifyProduct({}, [], sellingPlans);
+
+    product.selectedVariant = { slug: '1', price: '20.00', selling_plan_ids: ['gid://shopify/SellingPlan/1'] };
+    product.setPurchaseType('subscription');
+    product.syncPurchaseType();
+    assert.equal(product.purchaseType, 'subscription');
+
+    product.selectedVariant = { slug: '2', price: '20.00', selling_plan_ids: [] };
+    product.syncPurchaseType();
+    assert.equal(product.purchaseType, 'one_time');
+    assert.equal(product.currentSellingPlan(), null);
+});
+
+test('shopifyProduct stays on a subscription when the product requires one', () => {
+    const product = components.shopifyProduct({}, [], { ...sellingPlans, requires_selling_plan: true });
+
+    product.selectedVariant = { slug: '2', price: '20.00', selling_plan_ids: [] };
+    product.syncPurchaseType();
+    assert.equal(product.purchaseType, 'subscription');
+    assert.equal(product.sellingPlanSatisfied(), false);
 });

@@ -4,6 +4,7 @@ namespace Thoughtco\Shopify\Fieldtypes;
 
 use Statamic\Fields\Fieldtype;
 use Statamic\Support\Str;
+use Thoughtco\Shopify\Support\Money;
 use Thoughtco\Shopify\Support\SellingPlans as SellingPlanData;
 
 /**
@@ -49,6 +50,16 @@ class SellingPlans extends Fieldtype
             : __('Every :count :unit', ['count' => $count, 'unit' => $unit]);
     }
 
+    /**
+     * An amount in the shop's currency (fixed amount and price adjustments always are).
+     */
+    private static function money(float $value): string
+    {
+        $parts = Money::parts(number_format($value, 2, '.', ''));
+
+        return $parts['currency'].$parts['price'];
+    }
+
     public static function pricingLabel(array $plan): string
     {
         $labels = collect($plan['pricing_policies'] ?? [])
@@ -57,8 +68,8 @@ class SellingPlans extends Fieldtype
 
                 $label = match ($policy['adjustment_type'] ?? null) {
                     SellingPlanData::PERCENTAGE => __(':value% off', ['value' => $value + 0]),
-                    SellingPlanData::FIXED_AMOUNT => __(':value off', ['value' => number_format($value, 2)]),
-                    SellingPlanData::PRICE => __('Price :value', ['value' => number_format($value, 2)]),
+                    SellingPlanData::FIXED_AMOUNT => __(':value off', ['value' => static::money($value)]),
+                    SellingPlanData::PRICE => __('Price :value', ['value' => static::money($value)]),
                     default => null,
                 };
 

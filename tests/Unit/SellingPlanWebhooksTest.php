@@ -58,6 +58,32 @@ class SellingPlanWebhooksTest extends TestCase
     }
 
     #[Test]
+    public function an_identical_delivery_moments_later_is_skipped()
+    {
+        Bus::fake();
+        Event::fake([Events\SellingPlanGroupUpdate::class]);
+
+        $payload = [
+            'admin_graphql_api_id' => 'gid://shopify/SellingPlanGroup/7',
+            'id' => 7,
+            'name' => 'Subscribe & save',
+            'products' => [['id' => 30]],
+        ];
+
+        // separate deliveries (different webhook ids) of the same change
+        $this->postJson('/!/shopify/webhook/selling-plan-group/update', $payload, ['X-Shopify-Webhook-Id' => 'a'])->assertOk();
+        $this->postJson('/!/shopify/webhook/selling-plan-group/update', $payload, ['X-Shopify-Webhook-Id' => 'b'])->assertOk();
+
+        Bus::assertDispatchedTimes(ImportSingleProductJob::class, 1);
+        Event::assertDispatchedTimes(Events\SellingPlanGroupUpdate::class, 1);
+
+        // a different change is handled
+        $this->postJson('/!/shopify/webhook/selling-plan-group/update', [...$payload, 'name' => 'Renamed'], ['X-Shopify-Webhook-Id' => 'c'])->assertOk();
+
+        Bus::assertDispatchedTimes(ImportSingleProductJob::class, 2);
+    }
+
+    #[Test]
     public function an_updated_group_re_imports_its_products_and_the_products_that_had_it()
     {
         Bus::fake();

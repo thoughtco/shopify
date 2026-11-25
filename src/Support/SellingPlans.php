@@ -95,12 +95,13 @@ class SellingPlans
     }
 
     /**
-     * Admin API fields for the variant query: the groups the variant is in.
+     * Admin API fields for the variant query: the groups the variant is in. Kept small
+     * as it's per variant (up to 100 a page), so most of the query's cost.
      */
     public static function variantQueryFields(): string
     {
         return <<<'GQL'
-            sellingPlanGroups(first: 20) {
+            sellingPlanGroups(first: 10) {
               nodes {
                 id
               }
