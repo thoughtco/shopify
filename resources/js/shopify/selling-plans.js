@@ -39,12 +39,32 @@ const sellingPlansForVariant = (groups = [], variant = null) => {
 const initialPricingPolicy = (plan) => (plan?.pricing_policies ?? []).find(policy => ! policy.after_cycle) ?? null;
 
 /**
- * The price of a variant on a plan, as a number, or null when it can't be worked out:
- * a fixed amount or price adjustment is in the shop's currency, so isn't applied to a
- * market's price (pass `inShopCurrency: false`). The cart's sellingPlanAllocation has
- * the exact price once added.
+ * A variant's exact price on a plan in a market, imported from the Storefront API
+ * (variant.market_data[market].selling_plans[planId].price), as a number or null.
  */
-const sellingPlanPrice = (plan, price, { inShopCurrency = true } = {}) => {
+const marketSellingPlanPrice = (variant, market, planId) => {
+    const price = parseFloat(variant?.market_data?.[market]?.selling_plans?.[planId]?.price);
+
+    return Number.isNaN(price) ? null : price;
+};
+
+/**
+ * The price of a variant on a plan, as a number, or null when it can't be worked out.
+ *
+ * Pass `variant` and `market` (markets mode) to use the exact market price imported
+ * for the plan, which matches checkout. Without one, a fixed amount or price
+ * adjustment is in the shop's currency, so isn't applied to a market's price (pass
+ * `inShopCurrency: false`); the cart's sellingPlanAllocation has the exact price once added.
+ */
+const sellingPlanPrice = (plan, price, { inShopCurrency = true, variant = null, market = null } = {}) => {
+    if (market && variant) {
+        const marketPrice = marketSellingPlanPrice(variant, market, plan?.id);
+
+        if (marketPrice !== null) {
+            return marketPrice;
+        }
+    }
+
     const amount = parseFloat(price);
 
     if (Number.isNaN(amount)) {
@@ -78,6 +98,7 @@ const sellingPlanPrice = (plan, price, { inShopCurrency = true } = {}) => {
 export {
     allSellingPlans,
     initialPricingPolicy,
+    marketSellingPlanPrice,
     sellingPlanPrice,
     sellingPlansForVariant,
 };

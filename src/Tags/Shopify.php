@@ -189,14 +189,19 @@ class Shopify extends Tags
     }
 
     /**
-     * A variant's price on a plan. A market's price (markets mode with a `store` param)
-     * is in another currency, so only percentage adjustments are applied to it.
+     * A variant's price on a plan. In markets mode with a `store` param, the exact
+     * price imported from the Storefront API for that market; without one, a market's
+     * price (in another currency) only has percentage adjustments applied.
      */
     private function planPrice(array $plan, array $variant): ?float
     {
-        $inMarketCurrency = StoreConfig::isMarketsMode()
-            && ($store = $this->params->get('store'))
-            && Arr::get($variant, 'market_data.'.$store.'.price') !== null;
+        $store = StoreConfig::isMarketsMode() ? $this->params->get('store') : null;
+
+        if ($store && ($price = SellingPlans::marketPrice($variant, $store, $plan['id'] ?? null)) !== null) {
+            return (float) $price;
+        }
+
+        $inMarketCurrency = $store && Arr::get($variant, 'market_data.'.$store.'.price') !== null;
 
         return SellingPlans::price($variant['price'] ?? null, $plan, ! $inMarketCurrency);
     }

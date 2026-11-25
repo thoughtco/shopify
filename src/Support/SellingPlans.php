@@ -3,6 +3,8 @@
 namespace Thoughtco\Shopify\Support;
 
 use Statamic\Support\Arr;
+use Statamic\Support\Str;
+use Thoughtco\Shopify\Clients\Storefront;
 
 /**
  * Selling plans (subscriptions and other purchase options) created by whichever app
@@ -107,6 +109,74 @@ class SellingPlans
     }
 
     /**
+     * The exact price of each variant on each plan in a market (its country's currency,
+     * as at checkout), from the Storefront API: [variant id => [plan gid => prices]].
+     * The first price adjustment is the first delivery's.
+     */
+    public static function fetchMarketPrices(Storefront $storefront, int $productId, string $country): array
+    {
+        $query = <<<'GQL'
+            query ($id: ID!, $country: CountryCode!, $cursor: String) @inContext(country: $country) {
+              product(id: $id) {
+                variants(first: 250, after: $cursor) {
+                  nodes {
+                    id
+                    sellingPlanAllocations(first: 250) {
+                      nodes {
+                        sellingPlan {
+                          id
+                        }
+                        priceAdjustments {
+                          price { amount currencyCode }
+                          compareAtPrice { amount currencyCode }
+                          perDeliveryPrice { amount currencyCode }
+                        }
+                      }
+                    }
+                  }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                }
+              }
+            }
+            GQL;
+
+        $prices = [];
+        $cursor = null;
+
+        do {
+            $data = $storefront->query($query, [
+                'id' => 'gid://shopify/Product/'.$productId,
+                'country' => strtoupper($country),
+                'cursor' => $cursor,
+            ]);
+
+            foreach (Arr::get($data, 'product.variants.nodes', []) as $variant) {
+                $variantId = Str::afterLast($variant['id'] ?? '', '/');
+
+                foreach (Arr::get($variant, 'sellingPlanAllocations.nodes', []) as $allocation) {
+                    if (! $planId = Arr::get($allocation, 'sellingPlan.id')) {
+                        continue;
+                    }
+
+                    $prices[$variantId][$planId] = [
+                        'price' => Arr::get($allocation, 'priceAdjustments.0.price.amount'),
+                        'compare_at_price' => Arr::get($allocation, 'priceAdjustments.0.compareAtPrice.amount'),
+                        'per_delivery_price' => Arr::get($allocation, 'priceAdjustments.0.perDeliveryPrice.amount'),
+                    ];
+                }
+            }
+
+            $pageInfo = Arr::get($data, 'product.variants.pageInfo', []);
+            $cursor = $pageInfo['endCursor'] ?? null;
+        } while (($pageInfo['hasNextPage'] ?? false) && $cursor);
+
+        return $prices;
+    }
+
+    /**
      * The product's selling plan groups, from the Admin API response.
      */
     public static function groupsFromGraphql(array $product): array
@@ -189,6 +259,17 @@ class SellingPlans
     public static function initialPolicy(array $plan): ?array
     {
         return collect($plan['pricing_policies'] ?? [])->first(fn ($policy) => ! ($policy['after_cycle'] ?? null));
+    }
+
+    /**
+     * A variant's exact price on a plan in a market, as imported from the Storefront API
+     * (market_data.{market}.selling_plans.{plan gid}.price), or null when there isn't one.
+     */
+    public static function marketPrice(array $variant, string $market, ?string $planId): ?string
+    {
+        $price = $variant['market_data'][$market]['selling_plans'][$planId]['price'] ?? null;
+
+        return is_numeric($price) ? (string) $price : null;
     }
 
     /**

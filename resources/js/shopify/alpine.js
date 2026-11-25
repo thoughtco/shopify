@@ -301,7 +301,8 @@ const createData = (Alpine) => {
 
         /**
          * A variant's price on a plan (defaults to the selected variant and plan), as a
-         * number. Fixed amount adjustments are in the shop's currency, so a market's
+         * number. In markets mode this is the exact market price imported for the plan;
+         * without one, fixed amount adjustments are in the shop's currency, so a market's
          * price only has percentage discounts applied (null otherwise).
          */
         getSellingPlanPrice(plan = null, variant = null) {
@@ -314,7 +315,11 @@ const createData = (Alpine) => {
 
             const inMarket = Boolean(this.getMarketData(variant)?.price);
 
-            return sellingPlanPrice(plan, this.getVariantPrice(variant), { inShopCurrency: ! inMarket });
+            return sellingPlanPrice(plan, this.getVariantPrice(variant), {
+                inShopCurrency: ! inMarket,
+                variant,
+                market: this.market,
+            });
         },
 
         variantExistsAndIsInStock() {

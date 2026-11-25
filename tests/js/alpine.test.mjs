@@ -138,6 +138,39 @@ test('shopifyProduct only applies percentage discounts to a market price', () =>
     stores['statamic.shopify.cart'].market = undefined;
 });
 
+test('shopifyProduct uses the imported market price on a plan for the active market', () => {
+    const marketVariant = {
+        ...variant,
+        selling_plan_ids: undefined,
+        market_data: {
+            GB: { price: '9.99', inventory_quantity: 0 },
+            IE: { price: '12.99', inventory_quantity: 5, selling_plans: {
+                'gid://shopify/SellingPlan/1': { price: '11.50', compare_at_price: '12.99', per_delivery_price: '11.50' },
+                'gid://shopify/SellingPlan/2': { price: '8.00' },
+            } },
+        },
+    };
+
+    stores['statamic.shopify.cart'].market = 'IE';
+    const product = makeProduct(sellingPlans, [marketVariant]);
+    product.setPurchaseType('subscription');
+
+    // the stored price, not 10% off 12.99
+    assert.equal(product.getSellingPlanPrice(), 11.5);
+
+    // a fixed amount plan has a price too, now it's stored
+    product.selectSellingPlan('gid://shopify/SellingPlan/2');
+    assert.equal(product.getSellingPlanPrice(), 8);
+
+    // another market without stored prices falls back: percentage maths, nothing for fixed amounts
+    stores['statamic.shopify.cart'].market = 'GB';
+    assert.equal(product.getSellingPlanPrice(), null);
+    product.selectSellingPlan('gid://shopify/SellingPlan/1');
+    assert.equal(product.getSellingPlanPrice(), 8.99);
+
+    stores['statamic.shopify.cart'].market = undefined;
+});
+
 test('handleSubmit sends the selling plan and the cart maps the allocation', async () => {
     stores['statamic.shopify.cart'].market = undefined;
     window.shopifyConfig = { url: 'test.myshopify.com', token: 'token', apiVersion: '2026-01' };

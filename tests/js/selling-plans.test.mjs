@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { allSellingPlans, initialPricingPolicy, sellingPlanPrice, sellingPlansForVariant } from '../../resources/js/shopify/selling-plans.js';
+import { allSellingPlans, initialPricingPolicy, marketSellingPlanPrice, sellingPlanPrice, sellingPlansForVariant } from '../../resources/js/shopify/selling-plans.js';
 
 const plan = (id, type, value, afterCycle = null) => ({
     id: `gid://shopify/SellingPlan/${id}`,
@@ -53,4 +53,22 @@ test('fixed amounts aren’t applied to prices in another currency', () => {
     assert.equal(sellingPlanPrice(plan(1, 'FIXED_AMOUNT', 5), '23.00', { inShopCurrency: false }), null);
     assert.equal(sellingPlanPrice(plan(1, 'PRICE', 5), '23.00', { inShopCurrency: false }), null);
     assert.equal(sellingPlanPrice(plan(1, 'PERCENTAGE', 50), '23.00', { inShopCurrency: false }), 11.5);
+});
+
+test('a market’s imported plan price is used for every adjustment type, with the maths as a fallback', () => {
+    const variant = { market_data: { IE: { price: '30.00', selling_plans: {
+        'gid://shopify/SellingPlan/1': { price: '26.50' },
+        'gid://shopify/SellingPlan/2': { price: '24.00' },
+    } } } };
+
+    assert.equal(marketSellingPlanPrice(variant, 'IE', 'gid://shopify/SellingPlan/2'), 24);
+    assert.equal(marketSellingPlanPrice(variant, 'GB', 'gid://shopify/SellingPlan/2'), null);
+
+    // percentage (the stored price wins over 10% off 30) and fixed amount
+    assert.equal(sellingPlanPrice(plan(1, 'PERCENTAGE', 10), '30.00', { inShopCurrency: false, variant, market: 'IE' }), 26.5);
+    assert.equal(sellingPlanPrice(plan(2, 'FIXED_AMOUNT', 5), '30.00', { inShopCurrency: false, variant, market: 'IE' }), 24);
+
+    // nothing stored for the plan: percentage maths, nothing for fixed types
+    assert.equal(sellingPlanPrice(plan(3, 'PERCENTAGE', 10), '30.00', { inShopCurrency: false, variant, market: 'IE' }), 27);
+    assert.equal(sellingPlanPrice(plan(4, 'PRICE', 5), '30.00', { inShopCurrency: false, variant, market: 'IE' }), null);
 });

@@ -37,6 +37,13 @@ return [
     'storefront_token' => env('SHOPIFY_STOREFRONT_TOKEN'),
 
     /**
+     * Optional private Storefront API token, used (instead of the public token) for
+     * server-side Storefront requests, e.g. selling plan prices per market. Never
+     * output to the browser.
+     */
+    'storefront_private_token' => env('SHOPIFY_STOREFRONT_PRIVATE_TOKEN'),
+
+    /**
      * If using WebHooks make sure you have added the secret that they are signed with here
      */
     'webhook_secret' => env('SHOPIFY_WEBHOOK_SECRET'),

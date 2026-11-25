@@ -21,6 +21,7 @@ use Statamic\Support\Traits\Hookable;
 use Thoughtco\Shopify\Activity\ActivityLog;
 use Thoughtco\Shopify\Activity\ActivityStatus;
 use Thoughtco\Shopify\Clients\Graphql;
+use Thoughtco\Shopify\Clients\Storefront;
 use Thoughtco\Shopify\Events\ProductImportFailed;
 use Thoughtco\Shopify\Exceptions\GraphqlException;
 use Thoughtco\Shopify\Support\ProductSummary;
@@ -59,6 +60,17 @@ class ImportSingleProductJob implements ShouldQueue
      * The product's selling plan groups, when selling plans are imported.
      */
     protected array $sellingPlanGroups = [];
+
+    /**
+     * Markets mode: each variant's exact price on each plan per market, from the
+     * Storefront API ([variant id => [country => [plan gid => prices]]]).
+     */
+    protected array $marketSellingPlanPrices = [];
+
+    /**
+     * Markets whose selling plan prices couldn't be fetched, for the activity log.
+     */
+    protected array $sellingPlanPriceFailures = [];
 
     public function __construct(
         public int $productId,
@@ -273,6 +285,10 @@ class ImportSingleProductJob implements ShouldQueue
         if (SellingPlans::enabled()) {
             $this->sellingPlanGroups = SellingPlans::groupsFromGraphql($this->data);
             $data = array_merge($data, $this->sellingPlanData($entry));
+
+            if (StoreConfig::isMarketsMode() && $this->sellingPlanGroups) {
+                $this->fetchMarketSellingPlanPrices();
+            }
         }
 
         // Import Variant
@@ -679,6 +695,10 @@ class ImportSingleProductJob implements ShouldQueue
                 'compare_at_price' => $compareAtPrice,
                 'inventory_quantity' => $inventoryQuantity,
             ];
+
+            if (SellingPlans::enabled()) {
+                $marketData[$countryCode]['selling_plans'] = $this->marketSellingPlanPrices[(string) $variant['id']][$countryCode] ?? [];
+            }
         }
 
         return $marketData;
@@ -707,6 +727,30 @@ class ImportSingleProductJob implements ShouldQueue
             StoreConfig::isPrimaryStore($this->storeHandle) ? $plans : [],
             ['multi_store_selling_plans' => $byStore],
         );
+    }
+
+    /**
+     * Fetch the exact selling plan prices for each market from the Storefront API, so
+     * they match checkout. Failures are logged and the product imports without them
+     * (the tags and JS then work out what they can from the market price).
+     */
+    private function fetchMarketSellingPlanPrices(): void
+    {
+        if (! $storefront = Storefront::fromConfig()) {
+            return;
+        }
+
+        foreach (array_keys(StoreConfig::getMarkets()) as $countryCode) {
+            try {
+                foreach (SellingPlans::fetchMarketPrices($storefront, (int) $this->data['id'], $countryCode) as $variantId => $prices) {
+                    $this->marketSellingPlanPrices[(string) $variantId][$countryCode] = $prices;
+                }
+            } catch (Throwable $e) {
+                $this->sellingPlanPriceFailures[] = $countryCode;
+
+                Log::warning("Shopify: could not fetch {$countryCode} selling plan prices for product {$this->data['id']}: {$e->getMessage()}");
+            }
+        }
     }
 
     /**
@@ -823,9 +867,11 @@ class ImportSingleProductJob implements ShouldQueue
      */
     protected function changes(): array
     {
-        return $this->updatedImages
-            ? [...$this->variantChanges, 'images_updated' => $this->updatedImages]
-            : $this->variantChanges;
+        return array_merge(
+            $this->variantChanges,
+            $this->updatedImages ? ['images_updated' => $this->updatedImages] : [],
+            $this->sellingPlanPriceFailures ? ['selling_plan_prices_failed' => $this->sellingPlanPriceFailures] : [],
+        );
     }
 
     /**
