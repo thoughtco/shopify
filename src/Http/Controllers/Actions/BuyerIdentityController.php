@@ -44,8 +44,8 @@ class BuyerIdentityController extends Controller
                       address1
                       address2
                       city
-                      province
-                      country
+                      provinceCode
+                      countryCodeV2
                       zip
                       phone
                     }
@@ -66,19 +66,23 @@ class BuyerIdentityController extends Controller
         return $this->private(response()->json(array_filter([
             'email' => ($customer['email'] ?? null) ?: $user->email(),
             'phone' => $customer['phone'] ?? null,
-            'deliveryAddressPreferences' => ($address = $this->address($customer['defaultAddress'] ?? null))
-                ? [['deliveryAddress' => $address]]
-                : null,
+            'deliveryAddress' => $this->address($customer['defaultAddress'] ?? null),
         ])));
     }
 
     /**
-     * The Admin API address as a Storefront MailingAddressInput, without empty fields.
+     * The Admin API address as a Storefront CartDeliveryAddressInput, without empty fields.
      */
     private function address(?array $address): ?array
     {
-        return array_filter(Arr::only($address ?? [], [
-            'firstName', 'lastName', 'company', 'address1', 'address2', 'city', 'province', 'country', 'zip', 'phone',
+        if (! $address) {
+            return null;
+        }
+
+        $address['countryCode'] = $address['countryCodeV2'] ?? null;
+
+        return array_filter(Arr::only($address, [
+            'firstName', 'lastName', 'company', 'address1', 'address2', 'city', 'provinceCode', 'countryCode', 'zip', 'phone',
         ]), fn ($value) => filled($value)) ?: null;
     }
 

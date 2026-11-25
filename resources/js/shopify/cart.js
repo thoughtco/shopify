@@ -353,9 +353,8 @@ const removeGiftCardCodes = async (cartId, ids) => {
 };
 
 /**
- * Set who's buying (email, phone, countryCode, deliveryAddressPreferences), so
- * Shopify's checkout is pre-filled. In markets mode the cart stays in the page's
- * market country.
+ * Set who's buying (email, phone, countryCode), so Shopify's checkout is pre-filled.
+ * In markets mode the cart stays in the page's market country.
  */
 const updateBuyerIdentity = async (cartId, buyerIdentity) => {
     const query = operation('mutation', 'cartBuyerIdentityUpdate', ['$cartId: ID!', '$buyerIdentity: CartBuyerIdentityInput!'], `
@@ -371,6 +370,26 @@ const updateBuyerIdentity = async (cartId, buyerIdentity) => {
     return (await run('cartBuyerIdentityUpdate', query, {
         cartId,
         buyerIdentity: country ? { ...buyerIdentity, countryCode: country } : buyerIdentity,
+    }))?.cart;
+};
+
+/**
+ * Set the cart's delivery address (a CartDeliveryAddressInput: firstName, lastName,
+ * address1, city, provinceCode, countryCode, zip...), replacing any it already has,
+ * so Shopify's checkout is pre-filled with it.
+ */
+const setDeliveryAddress = async (cartId, deliveryAddress) => {
+    const query = operation('mutation', 'cartDeliveryAddressesReplace', ['$cartId: ID!', '$addresses: [CartSelectableAddressInput!]!'], `
+      cartDeliveryAddressesReplace(cartId: $cartId, addresses: $addresses) {
+        cart {
+          ${cartQuery}
+        }
+        ${userErrors}
+      }`);
+
+    return (await run('cartDeliveryAddressesReplace', query, {
+        cartId,
+        addresses: [{ address: { deliveryAddress }, selected: true }],
     }))?.cart;
 };
 
@@ -416,6 +435,7 @@ export {
     removeLine,
     setCartAttributes,
     setCartNote,
+    setDeliveryAddress,
     updateBuyerCountry,
     updateBuyerIdentity,
     updateDiscountCodes,

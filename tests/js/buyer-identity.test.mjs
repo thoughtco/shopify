@@ -45,13 +45,11 @@ const cart = (id) => ({
 const json = (body) => ({ ok: true, status: 200, json: async () => body });
 const noContent = () => ({ ok: true, status: 204, json: async () => { throw new Error('no body'); } });
 
-const identity = {
-    email: 'sam@example.com',
-    phone: '+447700900000',
-    deliveryAddressPreferences: [{ deliveryAddress: { firstName: 'Sam', address1: '1 High St', city: 'London', country: 'United Kingdom', zip: 'N1 1AA' } }],
-};
+const deliveryAddress = { firstName: 'Sam', address1: '1 High St', city: 'London', countryCode: 'GB', zip: 'N1 1AA' };
+const buyer = { email: 'sam@example.com', phone: '+447700900000' };
+const identity = { ...buyer, deliveryAddress };
 
-const { getBuyerIdentity, updateBuyerIdentity } = await import('../../resources/js/shopify/cart.js');
+const { getBuyerIdentity, setDeliveryAddress, updateBuyerIdentity } = await import('../../resources/js/shopify/cart.js');
 const { createStore } = await import('../../resources/js/shopify/alpine.js');
 createStore(Alpine);
 
@@ -69,17 +67,25 @@ beforeEach(() => {
 });
 
 test('updateBuyerIdentity sends the buyer identity', async () => {
-    const result = await updateBuyerIdentity('gid://shopify/Cart/1', identity);
+    const result = await updateBuyerIdentity('gid://shopify/Cart/1', buyer);
 
     assert.equal(result.id, 'gid://shopify/Cart/1');
     assert.match(requests[0].query, /cartBuyerIdentityUpdate\(cartId: \$cartId, buyerIdentity: \$buyerIdentity\)/);
-    assert.deepEqual(requests[0].variables, { cartId: 'gid://shopify/Cart/1', buyerIdentity: identity });
+    assert.deepEqual(requests[0].variables, { cartId: 'gid://shopify/Cart/1', buyerIdentity: buyer });
+});
+
+test('setDeliveryAddress replaces the cart’s delivery addresses with a selected one', async () => {
+    const result = await setDeliveryAddress('gid://shopify/Cart/1', deliveryAddress);
+
+    assert.equal(result.id, 'gid://shopify/Cart/1');
+    assert.match(requests[0].query, /cartDeliveryAddressesReplace\(cartId: \$cartId, addresses: \$addresses\)/);
+    assert.deepEqual(requests[0].variables, { cartId: 'gid://shopify/Cart/1', addresses: [{ address: { deliveryAddress }, selected: true }] });
 });
 
 test('updateBuyerIdentity keeps the cart in the market country', async () => {
     window.shopifyConfig.country = 'IE';
 
-    await updateBuyerIdentity('gid://shopify/Cart/1', { ...identity, countryCode: 'GB' });
+    await updateBuyerIdentity('gid://shopify/Cart/1', { ...buyer, countryCode: 'GB' });
 
     assert.equal(requests[0].variables.buyerIdentity.countryCode, 'IE');
     assert.equal(requests[0].variables.buyerIdentity.email, 'sam@example.com');
@@ -123,8 +129,9 @@ test('the cart store applies the buyer identity once per cart', async () => {
     await settle();
 
     assert.equal(fetches.length, 1);
-    assert.equal(requests.length, 1);
-    assert.deepEqual(requests[0].variables.buyerIdentity, identity);
+    assert.equal(requests.length, 2);
+    assert.deepEqual(requests[0].variables.buyerIdentity, buyer);
+    assert.deepEqual(requests[1].variables.addresses, [{ address: { deliveryAddress }, selected: true }]);
     assert.equal(storage['statamic.shopify.cart.id:buyer'], 'gid://shopify/Cart/1');
 
     // later responses for the same cart, and later page loads, don't apply it again
@@ -134,14 +141,46 @@ test('the cart store applies the buyer identity once per cart', async () => {
     await settle();
 
     assert.equal(fetches.length, 1);
-    assert.equal(requests.length, 1);
+    assert.equal(requests.length, 2);
 
     // a new cart gets it
     store().updateFromResponse(cart('gid://shopify/Cart/2'));
     await settle();
 
+    assert.equal(requests.length, 4);
+    assert.equal(requests[2].variables.cartId, 'gid://shopify/Cart/2');
+});
+
+test('a rejected delivery address keeps the buyer identity and isn’t retried', async () => {
+    const request = client.request;
+    client.request = async (query, options) => query.includes('cartDeliveryAddressesReplace')
+        ? (requests.push({ query, variables: options.variables }), { data: { cartDeliveryAddressesReplace: { cart: null, userErrors: [{ field: ['addresses'], message: 'Invalid address' }] } } })
+        : request(query, options);
+
+    store().updateFromResponse(cart('gid://shopify/Cart/1'));
+    await settle();
+
+    client.request = request;
+
     assert.equal(requests.length, 2);
-    assert.equal(requests[1].variables.cartId, 'gid://shopify/Cart/2');
+    assert.equal(store().cartId, 'gid://shopify/Cart/1');
+    assert.equal(storage['statamic.shopify.cart.id:buyer'], 'gid://shopify/Cart/1');
+});
+
+test('a rejected email still sets the delivery address', async () => {
+    const request = client.request;
+    client.request = async (query, options) => query.includes('cartBuyerIdentityUpdate')
+        ? (requests.push({ query, variables: options.variables }), { data: { cartBuyerIdentityUpdate: { cart: null, userErrors: [{ field: ['buyerIdentity', 'email'], message: 'Email is invalid' }] } } })
+        : request(query, options);
+
+    store().updateFromResponse(cart('gid://shopify/Cart/1'));
+    await settle();
+
+    client.request = request;
+
+    assert.equal(requests.length, 2);
+    assert.match(requests[1].query, /cartDeliveryAddressesReplace/);
+    assert.equal(storage['statamic.shopify.cart.id:buyer'], 'gid://shopify/Cart/1');
 });
 
 test('the cart store leaves guests’ carts alone, and checks again on the next page load', async () => {

@@ -41,8 +41,8 @@ class BuyerIdentityTest extends TestCase
                 'address1' => '1 High Street',
                 'address2' => '',
                 'city' => 'London',
-                'province' => 'England',
-                'country' => 'United Kingdom',
+                'provinceCode' => 'ENG',
+                'countryCodeV2' => 'GB',
                 'zip' => 'N1 1AA',
                 'phone' => '+447700900001',
             ],
@@ -106,18 +106,16 @@ class BuyerIdentityTest extends TestCase
             ->assertExactJson([
                 'email' => 'sam@shopify.example.com',
                 'phone' => '+447700900000',
-                'deliveryAddressPreferences' => [[
-                    'deliveryAddress' => [
-                        'firstName' => 'Sam',
-                        'lastName' => 'Shopper',
-                        'address1' => '1 High Street',
-                        'city' => 'London',
-                        'province' => 'England',
-                        'country' => 'United Kingdom',
-                        'zip' => 'N1 1AA',
-                        'phone' => '+447700900001',
-                    ],
-                ]],
+                'deliveryAddress' => [
+                    'firstName' => 'Sam',
+                    'lastName' => 'Shopper',
+                    'address1' => '1 High Street',
+                    'city' => 'London',
+                    'provinceCode' => 'ENG',
+                    'countryCode' => 'GB',
+                    'zip' => 'N1 1AA',
+                    'phone' => '+447700900001',
+                ],
             ]);
 
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));

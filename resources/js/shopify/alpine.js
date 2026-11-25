@@ -1,4 +1,4 @@
-import { addGiftCardCodes, addLines, getBuyerIdentity, getOrCreateCart, removeGiftCardCodes, removeLine, setCartAttributes, setCartNote, updateBuyerCountry, updateBuyerIdentity, updateDiscountCodes, updateLineQuantity } from './cart.js';
+import { addGiftCardCodes, addLines, getBuyerIdentity, getOrCreateCart, removeGiftCardCodes, removeLine, setCartAttributes, setCartNote, setDeliveryAddress, updateBuyerCountry, updateBuyerIdentity, updateDiscountCodes, updateLineQuantity } from './cart.js';
 import { cartStorageKey, formatMoney } from './money.js';
 
 const createStore = (Alpine) => {
@@ -62,7 +62,14 @@ const createStore = (Alpine) => {
                 return;
             }
 
-            const response = await updateBuyerIdentity(cartId, identity);
+            // set separately, so one Shopify rejects (reported with shopify.cart.error, e.g.
+            // an email it considers invalid) doesn't stop the other
+            const { deliveryAddress, ...buyerIdentity } = identity;
+            let response = Object.keys(buyerIdentity).length ? await updateBuyerIdentity(cartId, buyerIdentity) : undefined;
+
+            if (deliveryAddress) {
+                response = await setDeliveryAddress(cartId, deliveryAddress) ?? response;
+            }
 
             if (response) {
                 try {
