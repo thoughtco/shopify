@@ -34,11 +34,11 @@ const createStore = (Alpine) => {
             });
         },
 
-        // shopifyConfig.buyerIdentity: pre-fill checkout for a logged in customer, once per cart
+        // shopifyConfig.buyerIdentityUrl: pre-fill checkout for a logged in customer, once per cart
         async applyBuyerIdentity() {
             const key = cartStorageKey() + ':buyer';
 
-            if (window.shopifyConfig?.buyerIdentity !== true || ! this.cartId || this.buyerIdentityCartId === this.cartId) {
+            if (! window.shopifyConfig?.buyerIdentityUrl || ! this.cartId || this.buyerIdentityCartId === this.cartId) {
                 return;
             }
 

@@ -62,7 +62,7 @@ beforeEach(() => {
     requests = [];
     fetches = [];
     buyerResponse = json(identity);
-    window.shopifyConfig = { buyerIdentity: true, buyerIdentityUrl: '/!/shopify/buyer' };
+    window.shopifyConfig = { buyerIdentityUrl: '/!/shopify/buyer' };
     Object.keys(storage).forEach(key => delete storage[key]);
     store().cartId = null;
     store().buyerIdentityCartId = null;
@@ -86,7 +86,7 @@ test('updateBuyerIdentity keeps the cart in the market country', async () => {
     assert.equal(requests[0].variables.country, 'IE');
 });
 
-test('getBuyerIdentity is off unless shopifyConfig.buyerIdentity is true', async () => {
+test('getBuyerIdentity is off without shopifyConfig.buyerIdentityUrl', async () => {
     window.shopifyConfig = {};
 
     assert.equal(await getBuyerIdentity(), null);

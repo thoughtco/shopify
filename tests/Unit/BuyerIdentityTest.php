@@ -178,7 +178,6 @@ class BuyerIdentityTest extends TestCase
 
         $output = (string) Facades\Parse::template('{{ shopify:tokens }}', [], trusted: true);
 
-        $this->assertStringContainsString('"buyerIdentity":true', $output);
         $this->assertStringContainsString('"buyerIdentityUrl":"/!/shopify/buyer"', $output);
         $this->assertStringNotContainsString('sam@example.com', $output);
 

@@ -281,14 +281,14 @@ const updateBuyerIdentity = async (cartId, buyerIdentity) => {
 const getBuyerIdentity = async () => {
     const config = (typeof window !== 'undefined' ? window.shopifyConfig : null) ?? {};
 
-    if (config.buyerIdentity !== true || typeof fetch !== 'function') {
+    if (! config.buyerIdentityUrl || typeof fetch !== 'function') {
         return null;
     }
 
     const params = config.store ? `?store=${encodeURIComponent(config.store)}` : '';
 
     try {
-        const response = await fetch((config.buyerIdentityUrl ?? '/!/shopify/buyer') + params, {
+        const response = await fetch(config.buyerIdentityUrl + params, {
             credentials: 'same-origin',
             headers: { Accept: 'application/json' },
         });
