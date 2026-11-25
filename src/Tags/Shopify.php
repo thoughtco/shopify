@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Statamic\Extensions\Pagination\LengthAwarePaginator;
 use Statamic\Facades\Blink;
 use Statamic\Facades\Entry;
+use Statamic\Facades\Site;
 use Statamic\Facades\User;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
@@ -20,6 +21,7 @@ use Statamic\Tags\Tags;
 use Thoughtco\Shopify\Support\Customers;
 use Thoughtco\Shopify\Support\Money;
 use Thoughtco\Shopify\Support\ProductSummary;
+use Thoughtco\Shopify\Support\SellingPlans;
 use Thoughtco\Shopify\Support\StoreConfig;
 
 class Shopify extends Tags
@@ -47,6 +49,10 @@ class Shopify extends Tags
      */
     public function productPrice()
     {
+        if ($this->params->has('selling_plan') || $this->params->bool('subscription')) {
+            return $this->sellingPlanPrice();
+        }
+
         if ($summary = $this->contextSummary()) {
             return $this->priceOutput(
                 $summary['price_min'],
@@ -67,6 +73,193 @@ class Shopify extends Tags
             $this->isInStock($variants),
             $pricePluck->unique()->count() > 1
         );
+    }
+
+    /**
+     * The product's price on a selling plan: the `selling_plan` param's plan, or with
+     * `subscription="true"` the lowest price on any plan. Null when no variant can be
+     * bought on a plan (or a market's price can't be worked out, see SellingPlans::price()).
+     */
+    private function sellingPlanPrice(): ?string
+    {
+        if (! $variants = $this->resolveVariants()) {
+            return null;
+        }
+
+        [, $groups] = $this->productSellingPlans();
+        $planId = $this->params->get('selling_plan');
+
+        $prices = $variants
+            ->map(function ($variant) use ($groups, $planId) {
+                $plans = collect($this->plansForVariant($groups, $variant))
+                    ->when($planId, fn ($plans) => $plans->where('id', $planId));
+
+                return $plans
+                    ->map(fn ($plan) => $this->planPrice($plan, $variant))
+                    ->filter(fn ($price) => $price !== null)
+                    ->min();
+            })
+            ->filter(fn ($price) => $price !== null);
+
+        if ($prices->isEmpty()) {
+            return null;
+        }
+
+        return $this->priceOutput(
+            number_format($prices->min(), 2, '.', ''),
+            $this->isInStock($variants),
+            $prices->unique()->count() > 1
+        );
+    }
+
+    /**
+     * The selling plans for the product (the `slug` param, or the product in context),
+     * optionally for one variant (`variant` param, its id). Use with the bundled JS:
+     * {{ $plans = {shopify:selling_plans} }} ... shopifyProduct(options, variants, {{ $plans | to_json }})
+     *
+     * @return array
+     */
+    public function sellingPlans()
+    {
+        [$requiresSellingPlan, $groups] = $this->productSellingPlans();
+
+        $variants = $groups ? ($this->resolveVariants() ?? collect()) : collect();
+
+        if ($variantId = $this->params->get('variant')) {
+            $variants = $variants->filter(fn ($variant) => in_array((string) $variantId, [(string) ($variant['variant_id'] ?? ''), (string) $variant['slug']], true));
+        }
+
+        $groups = collect($groups)
+            ->map(function ($group) use ($variants) {
+                $group['selling_plans'] = collect(SellingPlans::plans([$group]))
+                    ->map(fn ($plan) => $this->planOutput($plan, $variants))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                return $group;
+            })
+            ->filter(fn ($group) => $group['selling_plans'])
+            ->values()
+            ->all();
+
+        $plans = collect($groups)->flatMap(fn ($group) => $group['selling_plans'])->values()->all();
+
+        return [
+            'requires_selling_plan' => $requiresSellingPlan,
+            'has_selling_plans' => (bool) $plans,
+            'groups' => $groups,
+            'plans' => $plans,
+        ];
+    }
+
+    /**
+     * A plan with its `label` (see SellingPlans::label()) and price: `price` (formatted) and `price_amount`, from the lowest
+     * priced of the variants that can be bought on it, and `adjustment_type` and
+     * `adjustment_value` (the first delivery's policy). Null when none of the variants
+     * can be bought on it.
+     */
+    private function planOutput(array $plan, Collection $variants): ?array
+    {
+        $eligible = $variants->filter(fn ($variant) => $this->variantHasPlan($variant, $plan));
+
+        if ($variants->isNotEmpty() && $eligible->isEmpty()) {
+            return null;
+        }
+
+        $amount = $eligible
+            ->map(fn ($variant) => $this->planPrice($plan, $variant))
+            ->filter(fn ($price) => $price !== null)
+            ->min();
+
+        $policy = SellingPlans::initialPolicy($plan);
+
+        $price = null;
+        if ($amount !== null) {
+            $payload = $this->formatPrice(number_format($amount, 2, '.', ''));
+            $price = __('shopify::messages.display_price', ['currency' => $payload->currency, 'price' => $payload->price]);
+        }
+
+        return array_merge($plan, [
+            'label' => SellingPlans::label($plan),
+            'price' => $price,
+            'price_amount' => $amount,
+            'adjustment_type' => $policy['adjustment_type'] ?? null,
+            'adjustment_value' => $policy['adjustment_value'] ?? null,
+        ]);
+    }
+
+    /**
+     * A variant's price on a plan. In markets mode with a `store` param, the exact
+     * price imported from the Storefront API for that market; without one, a market's
+     * price (in another currency) only has percentage adjustments applied.
+     */
+    private function planPrice(array $plan, array $variant): ?float
+    {
+        $store = StoreConfig::isMarketsMode() ? $this->params->get('store') : null;
+
+        if ($store && ($price = SellingPlans::marketPrice($variant, $store, $plan['id'] ?? null)) !== null) {
+            return (float) $price;
+        }
+
+        $inMarketCurrency = $store && Arr::get($variant, 'market_data.'.$store.'.price') !== null;
+
+        return SellingPlans::price($variant['price'] ?? null, $plan, ! $inMarketCurrency);
+    }
+
+    /**
+     * The plans a variant can be bought on.
+     */
+    private function plansForVariant(array $groups, array $variant): array
+    {
+        return array_values(array_filter(SellingPlans::plans($groups), fn ($plan) => $this->variantHasPlan($variant, $plan)));
+    }
+
+    /**
+     * Variants imported before selling plans (without selling_plan_ids) can use all of
+     * the product's plans.
+     */
+    private function variantHasPlan(array $variant, array $plan): bool
+    {
+        $planIds = $variant['selling_plan_ids'] ?? null;
+
+        return ! is_array($planIds) || in_array($plan['id'] ?? null, $planIds, true);
+    }
+
+    /**
+     * [requires_selling_plan, selling_plan_groups] for the product in context, or the
+     * product with the `slug` param. In unified multi-store mode the `store` param's
+     * plans are used.
+     */
+    protected function productSellingPlans(): array
+    {
+        $product = $this->params->has('slug') ? $this->findProduct($this->params->get('slug')) : null;
+        $get = fn ($key) => $product ? $product->get($key) : $this->context->raw($key);
+
+        $plans = [
+            'requires_selling_plan' => $get('requires_selling_plan'),
+            'selling_plan_groups' => $get('selling_plan_groups'),
+        ];
+
+        if (($store = $this->params->get('store')) && StoreConfig::isUnifiedMode()) {
+            $plans = Arr::get($get('multi_store_selling_plans') ?? [], $store, []) + $plans;
+        }
+
+        return [(bool) ($plans['requires_selling_plan'] ?? false), $plans['selling_plan_groups'] ?? []];
+    }
+
+    private function findProduct(?string $slug)
+    {
+        if (! $slug) {
+            return null;
+        }
+
+        $products = Entry::query()
+            ->where('collection', config('shopify.collection_handle', 'products'))
+            ->where('slug', $slug)
+            ->get();
+
+        return $products->first(fn ($entry) => $entry->locale() === Site::current()->handle()) ?? $products->first();
     }
 
     private function priceOutput($price, bool $inStock, bool $hasMultiplePrices): ?string

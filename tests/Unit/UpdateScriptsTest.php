@@ -136,7 +136,8 @@ tabs:
 
         (new UpdateScripts\UpdateFromFiveToSix('thoughtco/shopify'))->update();
 
-        $this->assertCount(19, $blueprint->fields()->all());
+        // every field in the current variant blueprint, including selling_plan_ids
+        $this->assertCount(20, $blueprint->fields()->all());
     }
 
     #[Test]

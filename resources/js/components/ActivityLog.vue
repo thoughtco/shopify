@@ -194,6 +194,10 @@ export default {
                 parts.push(`${changes.images_updated} image${changes.images_updated === 1 ? '' : 's'} updated`);
             }
 
+            if (changes.selling_plan_prices_failed?.length) {
+                parts.push(`selling plan prices not fetched for ${changes.selling_plan_prices_failed.join(', ')}`);
+            }
+
             return parts.length ? parts.join(', ') : null;
         },
     },

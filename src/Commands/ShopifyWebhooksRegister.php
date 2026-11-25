@@ -57,7 +57,7 @@ class ShopifyWebhooksRegister extends Command
 
         $rows = [];
 
-        foreach (WebhookTopic::cases() as $topic) {
+        foreach (WebhookTopic::registered() as $topic) {
             $callbackUrl = $topic->callbackUrl();
 
             $alreadyRegistered = collect($existing)->contains(
@@ -89,7 +89,7 @@ class ShopifyWebhooksRegister extends Command
      */
     private function prune(Graphql $graphql, array $existing): void
     {
-        $expected = collect(WebhookTopic::cases())->mapWithKeys(fn ($topic) => [$topic->value => $topic->callbackUrl()]);
+        $expected = collect(WebhookTopic::registered())->mapWithKeys(fn ($topic) => [$topic->value => $topic->callbackUrl()]);
         $webhookPath = $this->webhookPath();
         $host = parse_url(WebhookTopic::ProductsUpdate->callbackUrl(), PHP_URL_HOST);
         $kept = [];

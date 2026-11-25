@@ -24,7 +24,7 @@ class WebhooksStatusController extends CpController
             return response()->json(['error' => 'Could not connect to Shopify: '.$e->getMessage()], 500);
         }
 
-        $expected = collect(WebhookTopic::cases())
+        $expected = collect(WebhookTopic::registered())
             ->mapWithKeys(fn ($topic) => [$topic->value => $topic->callbackUrl()])
             ->all();
 

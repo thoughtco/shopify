@@ -221,6 +221,31 @@ tabs:
               visibility: read_only
               hide_display: false
       -
+        display: Subscriptions
+        instructions: 'Selling plans from your subscription app'
+        fields:
+          -
+            handle: requires_selling_plan
+            field:
+              display: 'Subscription only'
+              instructions: 'Can only be bought on a selling plan'
+              type: toggle
+              icon: toggle
+              listable: hidden
+              visibility: read_only
+              hide_display: false
+              if: 'custom shopifySellingPlansEnabled'
+          -
+            handle: selling_plan_groups
+            field:
+              display: 'Selling plans'
+              type: selling_plans
+              icon: repeat
+              listable: hidden
+              visibility: read_only
+              hide_display: false
+              if: 'custom shopifySellingPlansEnabled'
+      -
         display: 'Shopify record'
         instructions: 'Managed in Shopify and updated on every import'
         fields:
