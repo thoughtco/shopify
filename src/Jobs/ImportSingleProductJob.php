@@ -27,6 +27,7 @@ use Thoughtco\Shopify\Exceptions\GraphqlException;
 use Thoughtco\Shopify\Support\ProductSummary;
 use Thoughtco\Shopify\Support\SellingPlans;
 use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\ResolvesMetaobjects;
 use Thoughtco\Shopify\Traits\SavesImagesAndMetafields;
 use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 use Throwable;
@@ -37,6 +38,7 @@ class ImportSingleProductJob implements ShouldQueue
     use Hookable;
     use InteractsWithQueue;
     use Queueable;
+    use ResolvesMetaobjects;
     use SavesImagesAndMetafields;
     use ThrottlesShopifyRequests;
 
@@ -124,6 +126,7 @@ class ImportSingleProductJob implements ShouldQueue
                   id
                   jsonValue
                   key
+                  type
                   value
                 }
               }
@@ -208,6 +211,8 @@ class ImportSingleProductJob implements ShouldQueue
         $this->data['id'] = Str::afterLast($this->data['id'], '/');
 
         $this->fetchRemainingVariants($graphql, $variantFields);
+
+        $this->resolveProductMetaobjects($graphql);
 
         $productSite = $this->resolveSite();
 
@@ -654,6 +659,7 @@ class ImportSingleProductJob implements ShouldQueue
                         id
                         jsonValue
                         key
+                        type
                         value
                       }
                     }
@@ -794,6 +800,26 @@ class ImportSingleProductJob implements ShouldQueue
 
             $this->data['variants']['edges'] = array_merge($this->data['variants']['edges'] ?? [], $variants['edges'] ?? []);
             $pageInfo = $variants['pageInfo'] ?? [];
+        }
+    }
+
+    /**
+     * Resolve metaobject references in the product's and its variants' metafields, in one go.
+     */
+    private function resolveProductMetaobjects(Graphql $graphql): void
+    {
+        $paths = ['metafields.edges'];
+
+        foreach (array_keys(Arr::get($this->data, 'variants.edges', [])) as $index) {
+            $paths[] = "variants.edges.{$index}.node.metafields.edges";
+        }
+
+        $lists = collect($paths)->mapWithKeys(fn ($path) => [$path => Arr::get($this->data, $path) ?? []])->all();
+
+        foreach ($this->resolveMetaobjectReferences($graphql, $lists) as $path => $edges) {
+            if ($edges) {
+                Arr::set($this->data, $path, $edges);
+            }
         }
     }
 

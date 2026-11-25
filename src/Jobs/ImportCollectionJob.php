@@ -13,6 +13,7 @@ use Statamic\Support\Str;
 use Thoughtco\Shopify\Activity\ActivityLog;
 use Thoughtco\Shopify\Activity\ActivityStatus;
 use Thoughtco\Shopify\Support\StoreConfig;
+use Thoughtco\Shopify\Traits\ResolvesMetaobjects;
 use Thoughtco\Shopify\Traits\SavesImagesAndMetafields;
 use Thoughtco\Shopify\Traits\ThrottlesShopifyRequests;
 use Throwable;
@@ -22,6 +23,7 @@ class ImportCollectionJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use ResolvesMetaobjects;
     use SavesImagesAndMetafields;
     use ThrottlesShopifyRequests;
 
@@ -61,6 +63,7 @@ class ImportCollectionJob implements ShouldQueue
                       id
                       jsonValue
                       key
+                      type
                       value
                     }
                   }
@@ -105,7 +108,9 @@ class ImportCollectionJob implements ShouldQueue
             }
         }
 
-        $metafields = collect(Arr::get($this->collection, 'metafields.edges', []))->map(fn ($metafield) => $metafield['node'] ?? [])->filter()->all();
+        $edges = $this->resolveMetaobjectReferences($graphql, [Arr::get($this->collection, 'metafields.edges') ?? []])[0];
+
+        $metafields = collect($edges)->map(fn ($metafield) => $metafield['node'] ?? [])->filter()->all();
 
         if ($metafields) {
             $metafields = $this->parseMetafields($metafields, 'collection');
