@@ -222,7 +222,7 @@ tabs:
               hide_display: false
       -
         display: Subscriptions
-        instructions: 'Selling plans from your subscription app, imported when `selling_plans` is enabled'
+        instructions: 'Selling plans from your subscription app'
         fields:
           -
             handle: requires_selling_plan
@@ -234,6 +234,7 @@ tabs:
               listable: hidden
               visibility: read_only
               hide_display: false
+              if: 'custom shopifySellingPlansEnabled'
           -
             handle: selling_plan_groups
             field:
@@ -243,6 +244,7 @@ tabs:
               listable: hidden
               visibility: read_only
               hide_display: false
+              if: 'custom shopifySellingPlansEnabled'
       -
         display: 'Shopify record'
         instructions: 'Managed in Shopify and updated on every import'

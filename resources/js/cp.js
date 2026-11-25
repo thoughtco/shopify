@@ -9,6 +9,9 @@ Statamic.booting(() => {
   Statamic.$components.register('disabled_text-fieldtype', DisabledText)
   Statamic.$components.register('selling_plans-fieldtype', SellingPlans)
 
+  // hides the product blueprint's Subscriptions fields (and so the section) unless selling plans are enabled
+  Statamic.$conditions.add('shopifySellingPlansEnabled', () => Boolean(Statamic.$config.get('shopify')?.sellingPlans))
+
   Statamic.$inertia.register('shopify::Dashboard', Dashboard)
   Statamic.$inertia.register('shopify::Activity', Activity)
 });

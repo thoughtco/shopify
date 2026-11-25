@@ -5,6 +5,7 @@ namespace Thoughtco\Shopify\Tests\Unit;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
 use Statamic\Fields\Field;
+use Statamic\Statamic;
 use Thoughtco\Shopify\Fieldtypes\SellingPlans;
 use Thoughtco\Shopify\Tests\TestCase;
 
@@ -43,6 +44,19 @@ class SellingPlansFieldtypeTest extends TestCase
         $this->assertInstanceOf(SellingPlans::class, $field->fieldtype());
         $this->assertSame('read_only', $field->get('visibility'));
         $this->assertArrayHasKey('selling_plan_groups', Facades\Collection::find('products')->entryBlueprint()->tabs()->get('shopify')->fields()->all());
+    }
+
+    #[Test]
+    public function the_subscriptions_fields_are_hidden_in_the_cp_unless_selling_plans_are_enabled()
+    {
+        $blueprint = Facades\Collection::find('products')->entryBlueprint();
+
+        // the section hides when both of its fields are hidden by the condition
+        $this->assertSame('custom shopifySellingPlansEnabled', $blueprint->field('requires_selling_plan')->get('if'));
+        $this->assertSame('custom shopifySellingPlansEnabled', $blueprint->field('selling_plan_groups')->get('if'));
+
+        $this->assertFalse(Statamic::jsonVariables(request())['shopify']['sellingPlans']);
+        $this->assertStringContainsString("Statamic.\$conditions.add('shopifySellingPlansEnabled'", file_get_contents(__DIR__.'/../../resources/js/cp.js'));
     }
 
     #[Test]
