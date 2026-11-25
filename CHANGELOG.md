@@ -1,5 +1,14 @@
 # Changelog
 
+## v9.1.0 - 2026-11-25
+
+### What's Changed
+* Deploy the demo store on Ploi when a release is published by @ryanmitchell in https://github.com/thoughtco/shopify/pull/398
+* Discount codes and gift cards in the cart JS by @ryanmitchell in https://github.com/thoughtco/shopify/pull/402
+
+
+**Full Changelog**: https://github.com/thoughtco/shopify/compare/v9.0.1...v9.1.0
+
 ## v9.0.1 - 2026-11-24
 
 ### What's Changed
