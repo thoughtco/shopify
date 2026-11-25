@@ -30,7 +30,7 @@ const store = stores['statamic.shopify.cart'];
 
 const money = (amount) => ({ amount, currencyCode: 'GBP' });
 
-const cartResponse = ({ discountCodes = [], appliedGiftCards = [], lineDiscount = null } = {}) => ({
+const cartResponse = ({ discountCodes = [], appliedGiftCards = [], lineDiscount = null, cartDiscount = null } = {}) => ({
     id: 'gid://shopify/Cart/1',
     checkoutUrl: 'https://example.myshopify.com/cart/c/1',
     note: '',
@@ -47,6 +47,7 @@ const cartResponse = ({ discountCodes = [], appliedGiftCards = [], lineDiscount 
             },
         }],
     },
+    discountAllocations: cartDiscount ? [{ discountedAmount: money(cartDiscount) }] : [],
     discountCodes,
     appliedGiftCards,
 });
@@ -80,6 +81,14 @@ test('updateFromResponse maps discounts, codes, gift cards and the subtotal', ()
         balanceAmount: 15.5,
         currencyCode: 'GBP',
     }]);
+});
+
+test('order-level discounts are added to the line discounts', () => {
+    store.updateFromResponse(cartResponse({ discountCodes: [{ code: 'ORDER10', applicable: true }], lineDiscount: '1.5', cartDiscount: '2.0' }));
+
+    assert.equal(store.discount, '£3.50');
+    assert.equal(store.discountAmount, 3.5);
+    assert.equal(store.lineItems[0].discount, '£1.50');
 });
 
 test('a cart without discounts has no discount', () => {
@@ -151,6 +160,16 @@ test('a rejected gift card leaves the cart as it was and sends shopify.cart.erro
     assert.equal(await store.applyGiftCardCode('NOPE'), undefined);
     assert.equal(errors[0].operation, 'cartGiftCardCodesAdd');
     assert.equal(store.giftCards.length, 1);
+});
+
+test('a gift card code Shopify ignores is reported as an error', async () => {
+    store.updateFromResponse(cartResponse());
+    reset('cartGiftCardCodesAdd', cartResponse());
+
+    assert.equal(await store.applyGiftCardCode('NOTAREALGIFTCARD'), undefined);
+    assert.equal(errors[0].operation, 'cartGiftCardCodesAdd');
+    assert.equal(errors[0].errors[0].code, 'GIFT_CARD_NOT_APPLIED');
+    assert.deepEqual(store.giftCards, []);
 });
 
 test('applying a code without a cart creates one first', async () => {

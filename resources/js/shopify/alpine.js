@@ -170,6 +170,10 @@ const createStore = (Alpine) => {
             this.subtotal = this.formatCurrency(checkout.cost.totalAmount.amount, currencyCode);
             this.subtotalAmount = parseFloat(checkout.cost.totalAmount.amount);
             this.checkoutUrl = checkout.checkoutUrl;
+            // order-level discounts aren't allocated to the lines, so add the cart's own
+            // allocations (deprecated in 2026-01, but the only place these are returned)
+            discountAmount += discountedAmount(checkout.discountAllocations);
+
             this.discount = discountAmount ? this.formatCurrency(discountAmount, currencyCode) : null;
             this.discountAmount = discountAmount;
             this.discountCodes = (checkout.discountCodes ?? []).map(({ code, applicable }) => ({ code, applicable }));

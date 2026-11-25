@@ -54,6 +54,12 @@ const cartQuery = `
         }
       }
       note
+      discountAllocations {
+        discountedAmount {
+          amount
+          currencyCode
+        }
+      }
       discountCodes {
         code
         applicable
@@ -296,7 +302,9 @@ const updateDiscountCodes = async (cartId, codes) => {
 };
 
 /**
- * Add gift card codes to the cart, keeping any already applied.
+ * Add gift card codes to the cart, keeping any already applied. Shopify doesn't return
+ * a userError for a code that isn't a gift card, it just doesn't apply it, so a code
+ * with no applied gift card ending in its last characters is reported as an error.
  */
 const addGiftCardCodes = async (cartId, codes) => {
     const query = operation('mutation', 'cartGiftCardCodesAdd', ['$cartId: ID!', '$giftCardCodes: [String!]!'], `
@@ -307,7 +315,26 @@ const addGiftCardCodes = async (cartId, codes) => {
         ${userErrors}
       }`);
 
-    return (await run('cartGiftCardCodesAdd', query, { cartId, giftCardCodes: codes }))?.cart;
+    const cart = (await run('cartGiftCardCodesAdd', query, { cartId, giftCardCodes: codes }))?.cart;
+
+    if (! cart) {
+        return;
+    }
+
+    const applied = (cart.appliedGiftCards ?? []).map(card => card.lastCharacters.toLowerCase());
+    const notApplied = codes.filter(code => ! applied.includes(code.replace(/\s/g, '').slice(-4).toLowerCase()));
+
+    if (notApplied.length) {
+        reportError('cartGiftCardCodesAdd', notApplied.map(code => ({
+            field: ['giftCardCodes'],
+            code: 'GIFT_CARD_NOT_APPLIED',
+            message: 'This gift card code isn\'t valid.',
+        })));
+
+        return;
+    }
+
+    return cart;
 };
 
 /**

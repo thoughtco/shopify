@@ -45,9 +45,10 @@ test('updateDiscountCodes sends the codes and returns the cart', async () => {
 });
 
 test('addGiftCardCodes and removeGiftCardCodes use the add and remove mutations', async () => {
-    reset({ data: { cartGiftCardCodesAdd: { cart: fakeCart, userErrors: [] }, cartGiftCardCodesRemove: { cart: fakeCart, userErrors: [] } } });
+    const withGiftCard = { ...fakeCart, appliedGiftCards: [{ id: 'gid://shopify/AppliedGiftCard/1', lastCharacters: '1234' }] };
+    reset({ data: { cartGiftCardCodesAdd: { cart: withGiftCard, userErrors: [] }, cartGiftCardCodesRemove: { cart: fakeCart, userErrors: [] } } });
 
-    assert.deepEqual(await cart.addGiftCardCodes('gid://shopify/Cart/1', ['ABCD1234']), fakeCart);
+    assert.deepEqual(await cart.addGiftCardCodes('gid://shopify/Cart/1', ['ABCD1234']), withGiftCard);
     assert.match(requests[0].query, /cartGiftCardCodesAdd\(cartId: \$cartId, giftCardCodes: \$giftCardCodes\)/);
     assert.deepEqual(requests[0].variables, { cartId: 'gid://shopify/Cart/1', giftCardCodes: ['ABCD1234'] });
 

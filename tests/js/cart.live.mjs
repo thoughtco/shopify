@@ -129,6 +129,7 @@ test('keeps a discount code that does not apply and reports an unknown gift card
     let current = await cart.createFreshCart([{ merchandiseId: variantId, quantity: 1 }]);
     assert.ok(current.cost.subtotalAmount.amount, 'the cart returns its subtotal');
     assert.ok(Array.isArray(current.lines.edges[0].node.discountAllocations), 'lines return their discounts');
+    assert.ok(Array.isArray(current.discountAllocations), 'the cart returns its order-level discounts');
 
     current = await cart.updateDiscountCodes(current.id, ['NOT-A-REAL-CODE-123']);
     assert.deepEqual(current.discountCodes, [{ code: 'NOT-A-REAL-CODE-123', applicable: false }], 'cartDiscountCodesUpdate');
