@@ -84,6 +84,22 @@ class SellingPlanTagsTest extends TestCase
     }
 
     #[Test]
+    public function labels_plans_by_their_options_rather_than_their_name()
+    {
+        $groups = $this->sellingPlanGroups();
+        $groups[0]['selling_plans'][0]['name'] = 'Deliver every month, 10% off';
+        $groups[0]['selling_plans'][0]['options'] = ['Deliver every month'];
+        $groups[0]['selling_plans'][1]['options'] = [];
+
+        $context = $this->makeProduct(['selling_plan_groups' => $groups]);
+
+        $this->assertSame(
+            'Deliver every month;Weekly;Prepaid;',
+            $this->tag('{{ shopify:selling_plans }}{{ plans }}{{ label }};{{ /plans }}{{ /shopify:selling_plans }}', $context)
+        );
+    }
+
+    #[Test]
     public function lists_only_a_variants_own_plans()
     {
         $context = $this->makeProduct();

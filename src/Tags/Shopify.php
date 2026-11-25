@@ -154,7 +154,7 @@ class Shopify extends Tags
     }
 
     /**
-     * A plan with its price: `price` (formatted) and `price_amount`, from the lowest
+     * A plan with its `label` (see SellingPlans::label()) and price: `price` (formatted) and `price_amount`, from the lowest
      * priced of the variants that can be bought on it, and `adjustment_type` and
      * `adjustment_value` (the first delivery's policy). Null when none of the variants
      * can be bought on it.
@@ -181,6 +181,7 @@ class Shopify extends Tags
         }
 
         return array_merge($plan, [
+            'label' => SellingPlans::label($plan),
             'price' => $price,
             'price_amount' => $amount,
             'adjustment_type' => $policy['adjustment_type'] ?? null,

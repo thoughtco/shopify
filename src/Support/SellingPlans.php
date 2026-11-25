@@ -253,6 +253,19 @@ class SellingPlans
     }
 
     /**
+     * A plan's label for a storefront: its option values (e.g. "Deliver every 2 months"),
+     * falling back to its name. Apps such as Shopify Subscriptions put the discount in
+     * the name in the shop's currency ("Deliver every 2 months, £3.00 off"), which is
+     * wrong in other markets.
+     */
+    public static function label(array $plan): ?string
+    {
+        $options = array_filter(array_map('strval', $plan['options'] ?? []), 'strlen');
+
+        return $options ? implode(', ', $options) : ($plan['name'] ?? null);
+    }
+
+    /**
      * The pricing policy for the first delivery (no after_cycle, or 0). Policies for
      * later cycles don't change the price shown.
      */
