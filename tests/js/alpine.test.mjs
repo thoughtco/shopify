@@ -12,6 +12,10 @@ const Alpine = {
 globalThis.window = { shopifyConfig: {}, addEventListener: () => {} };
 globalThis.localStorage = { getItem: () => null, setItem: () => {} };
 
+// the Storefront client keeps the fetch it was created with, so tests swap the handler
+let fetchHandler = async () => new Response('{}');
+globalThis.fetch = (...args) => fetchHandler(...args);
+
 const { createData, createStore } = await import('../../resources/js/shopify/alpine.js');
 createStore(Alpine);
 createData(Alpine);
@@ -185,7 +189,7 @@ test('handleSubmit sends the selling plan and the cart maps the allocation', asy
     });
 
     const requests = [];
-    globalThis.fetch = async (url, options) => {
+    fetchHandler = async (url, options) => {
         const body = JSON.parse(options.body);
         requests.push(body);
 
@@ -242,4 +246,51 @@ test('shopifyProduct stays on a subscription when the product requires one', () 
     product.syncPurchaseType();
     assert.equal(product.purchaseType, 'subscription');
     assert.equal(product.sellingPlanSatisfied(), false);
+});
+
+test('buyNow buys the selected variant without touching the customer’s cart', async () => {
+    window.shopifyConfig = { url: 'test.myshopify.com', token: 'token', apiVersion: '2026-01' };
+    const redirects = [];
+    window.location = { assign: url => redirects.push(url) };
+
+    const store = stores['statamic.shopify.cart'];
+    store.cartId = 'gid://shopify/Cart/existing';
+
+    const requests = [];
+    fetchHandler = async (url, options) => {
+        requests.push(JSON.parse(options.body));
+
+        return new Response(JSON.stringify({ data: { cartCreate: { userErrors: [], cart: { id: 'gid://shopify/Cart/2', checkoutUrl: 'https://checkout/2' } } } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
+
+    const product = components.shopifyProduct({}, planVariants, sellingPlans);
+    product.$el = { querySelector: () => ({ value: '1' }) };
+    product.$refs = { qty: { value: '2' } };
+    product.init();
+    product.setPurchaseType('subscription');
+
+    await product.buyNow({ discountCodes: ['SAVE10'] });
+
+    assert.equal(requests.length, 1);
+    assert.deepEqual(requests[0].variables.cartInput, {
+        discountCodes: ['SAVE10'],
+        lines: [{ attributes: [], merchandiseId: 'gid://shopify/ProductVariant/1', quantity: 2, sellingPlanId: 'gid://shopify/SellingPlan/1' }],
+    });
+    assert.deepEqual(redirects, ['https://checkout/2']);
+    assert.equal(product.buyingNow, true);
+    assert.equal(store.cartId, 'gid://shopify/Cart/existing');
+});
+
+test('buyNow does nothing when a required selling plan is missing', async () => {
+    const requests = [];
+    fetchHandler = async (url, options) => requests.push(options);
+
+    const product = components.shopifyProduct({}, [], { ...sellingPlans, requires_selling_plan: true });
+    product.$el = { querySelector: () => ({ value: '2' }) };
+    product.$refs = { qty: { value: '1' } };
+    product.selectedVariant = { slug: '2', price: '20.00', selling_plan_ids: [] };
+
+    assert.equal(await product.buyNow(), undefined);
+    assert.equal(requests.length, 0);
+    assert.equal(product.buyingNow, false);
 });

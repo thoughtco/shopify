@@ -1,5 +1,15 @@
 # Changelog
 
+## v9.2.0 - 2026-11-26
+
+### What's Changed
+* Support subscriptions through Shopify selling plans by @ryanmitchell in https://github.com/thoughtco/shopify/pull/399
+* Pre-fill checkout with the logged in customer's buyer identity by @ryanmitchell in https://github.com/thoughtco/shopify/pull/400
+* Import metaobject references in metafields by @ryanmitchell in https://github.com/thoughtco/shopify/pull/401
+
+
+**Full Changelog**: https://github.com/thoughtco/shopify/compare/v9.1.0...v9.2.0
+
 ## v9.1.0 - 2026-11-25
 
 ### What's Changed
