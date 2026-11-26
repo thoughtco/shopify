@@ -655,6 +655,16 @@ class TagsTest extends TestCase
 
         $this->assertSame('1: 100', $this->tag('{{ shopify:customer:subscriptions status="active" }}{{ subscriptions_count }}:{{ subscriptions }} {{ id }}{{ /subscriptions }}{{ /shopify:customer:subscriptions }}'));
 
+        // where to manage them
+        $manage = '{{ shopify:customer:subscriptions }}{{ subscriptions }}{{ manage_url ?? "none" }}|{{ /subscriptions }}{{ /shopify:customer:subscriptions }}';
+        $this->assertSame('none|none|none|', $this->tag($manage));
+
+        config(['shopify.subscriptions.manage_url' => 'https://shopify.com/1/account/pages/abc']);
+        $this->assertSame('https://shopify.com/1/account/pages/abc|https://shopify.com/1/account/pages/abc|https://shopify.com/1/account/pages/abc|', $this->tag($manage));
+
+        config(['shopify.subscriptions.manage_url' => 'https://portal.example.com/subscriptions/{id}']);
+        $this->assertSame('https://portal.example.com/subscriptions/300|none|https://portal.example.com/subscriptions/100|', $this->tag($manage));
+
         // the order tag can be changed, and is escaped in the search
         config(['shopify.subscriptions.order_tag' => 'Sub "first"']);
         $this->tag($template);

@@ -980,6 +980,7 @@ class Shopify extends Tags
                     ->filter(fn ($lineItem) => Arr::get($lineItem, 'sellingPlan.sellingPlanId'))
                     ->groupBy(fn ($lineItem) => $lineItem['subscription']['id'] ?? 'plan:'.$lineItem['sellingPlan']['sellingPlanId'])
                     ->map(fn ($lines) => [
+                        'manage_url' => $this->subscriptionManageUrl($lines->first()['subscription']['id'] ?? null),
                         'id' => $lines->first()['subscription']['id'] ?? null,
                         'status' => $lines->first()['subscription']['status'] ?? null,
                         'nextBillingDate' => $lines->first()['subscription']['nextBillingDate'] ?? null,
@@ -994,6 +995,23 @@ class Shopify extends Tags
             ->all();
 
         return ['subscriptions' => $subscriptions, 'subscriptions_count' => count($subscriptions)];
+    }
+
+    /**
+     * shopify.subscriptions.manage_url, with {id} replaced by the subscription's ID
+     * (null when it needs an ID the subscription doesn't have yet).
+     */
+    private function subscriptionManageUrl(?int $id): ?string
+    {
+        if (! $url = config('shopify.subscriptions.manage_url')) {
+            return null;
+        }
+
+        if (! str_contains($url, '{id}')) {
+            return $url;
+        }
+
+        return $id ? str_replace('{id}', (string) $id, $url) : null;
     }
 
     /**

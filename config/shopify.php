@@ -215,6 +215,11 @@ return [
      */
     'subscriptions' => [
         'order_tag' => env('SHOPIFY_SUBSCRIPTION_ORDER_TAG', 'Subscription First Order'),
+
+        // Where customers manage their subscriptions (your subscription app's portal),
+        // output as each subscription's manage_url. {id} is replaced with the
+        // subscription's ID, for apps that link to a single subscription.
+        'manage_url' => env('SHOPIFY_SUBSCRIPTION_MANAGE_URL'),
     ],
 
     /**
