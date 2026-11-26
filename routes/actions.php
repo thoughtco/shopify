@@ -4,6 +4,7 @@ use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Illuminate\Support\Facades\Route;
 use Thoughtco\Shopify\Http\Controllers\Actions\AddressController;
 use Thoughtco\Shopify\Http\Controllers\Actions\BuyerIdentityController;
+use Thoughtco\Shopify\Http\Controllers\Actions\MarketingConsentController;
 use Thoughtco\Shopify\Http\Controllers\Actions\VariantsController;
 use Thoughtco\Shopify\Http\Controllers\Webhooks;
 use Thoughtco\Shopify\Http\Middleware\VerifyShopifyHeaders;
@@ -22,6 +23,10 @@ Route::name('shopify.')
                 Route::delete('{id}', [AddressController::class, 'destroy'])
                     ->name('address.destroy');
             });
+
+        Route::post('marketing', [MarketingConsentController::class, 'update'])
+            ->middleware(['auth', 'throttle:60,1', HandlePrecognitiveRequests::class])
+            ->name('marketing.update');
 
         Route::get('buyer', BuyerIdentityController::class)
             ->middleware('throttle:60,1')

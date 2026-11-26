@@ -314,4 +314,63 @@ class ActionsTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors(['countryCode' => 'country']);
     }
+
+    #[Test]
+    public function marketing_consent_requires_authentication()
+    {
+        $this->postJson('/!/shopify/marketing', ['email' => 1])->assertUnauthorized();
+    }
+
+    #[Test]
+    public function updates_the_logged_in_customers_marketing_consent()
+    {
+        $captured = [];
+
+        $this->mock(Graphql::class, function (MockInterface $mock) use (&$captured) {
+            $mock->shouldReceive('query')
+                ->andReturnUsing(function ($args) use (&$captured) {
+                    $captured[] = $args;
+                    $operation = str_contains($args['query'], 'customerSmsMarketingConsentUpdate') ? 'customerSmsMarketingConsentUpdate' : 'customerEmailMarketingConsentUpdate';
+                    $field = $operation === 'customerSmsMarketingConsentUpdate' ? 'smsMarketingConsent' : 'emailMarketingConsent';
+                    $state = $args['variables']['input'][$field]['marketingState'];
+
+                    return new HttpResponse(status: 200, body: json_encode(['data' => [$operation => ['customer' => [$field => ['marketingState' => $state]], 'userErrors' => []]]]));
+                });
+        });
+
+        // a customer_id in the request is ignored: always the logged in user's customer
+        $this->actingAsCustomer(5)
+            ->postJson('/!/shopify/marketing', ['email' => '1', 'sms' => '0', 'customer_id' => 999])
+            ->assertOk()
+            ->assertJson(['email_marketing_state' => 'SUBSCRIBED', 'sms_marketing_state' => 'UNSUBSCRIBED']);
+
+        $this->assertCount(2, $captured);
+        $this->assertSame('gid://shopify/Customer/5', $captured[0]['variables']['input']['customerId']);
+        $this->assertSame('SUBSCRIBED', $captured[0]['variables']['input']['emailMarketingConsent']['marketingState']);
+        $this->assertSame('SINGLE_OPT_IN', $captured[0]['variables']['input']['emailMarketingConsent']['marketingOptInLevel']);
+        $this->assertSame('UNSUBSCRIBED', $captured[1]['variables']['input']['smsMarketingConsent']['marketingState']);
+
+        // only the channels sent are changed
+        $captured = [];
+        $this->actingAsCustomer(5)->postJson('/!/shopify/marketing', ['email' => '0'])->assertOk();
+        $this->assertCount(1, $captured);
+
+        // nothing to change, or not a boolean
+        $this->actingAsCustomer(5)->postJson('/!/shopify/marketing', [])->assertStatus(422);
+        $this->actingAsCustomer(5)->postJson('/!/shopify/marketing', ['email' => 'yes please'])->assertStatus(422)->assertJsonValidationErrors(['email']);
+    }
+
+    #[Test]
+    public function returns_shopify_user_errors_when_updating_marketing_consent()
+    {
+        $this->mock(Graphql::class, function (MockInterface $mock) {
+            $mock->shouldReceive('query')
+                ->andReturn(new HttpResponse(status: 200, body: '{"data":{"customerSmsMarketingConsentUpdate":{"customer":null,"userErrors":[{"field":["input","smsMarketingConsent"],"message":"Phone number is required"}]}}}'));
+        });
+
+        $this->actingAsCustomer()
+            ->postJson('/!/shopify/marketing', ['sms' => '1'])
+            ->assertStatus(422)
+            ->assertJson(['message' => 'Phone number is required']);
+    }
 }

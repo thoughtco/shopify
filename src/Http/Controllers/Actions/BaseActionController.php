@@ -3,10 +3,48 @@
 namespace Thoughtco\Shopify\Http\Controllers\Actions;
 
 use Illuminate\Http\Request;
+use Statamic\Facades\User;
 use Statamic\Http\Controllers\Controller;
+use Statamic\Support\Arr;
+use Thoughtco\Shopify\Support\Customers;
+use Thoughtco\Shopify\Support\StoreConfig;
 
 class BaseActionController extends Controller
 {
+    /**
+     * The logged in user's customer ID, in the store the form was for (`_store`) on multi-store sites.
+     */
+    protected function customerId(Request $request): ?string
+    {
+        return ($user = User::current()) ? Customers::id($user, $this->customerStore($request)) : null;
+    }
+
+    protected function customerStore(Request $request): ?string
+    {
+        return Customers::store($request->input('_store'));
+    }
+
+    /**
+     * Run a mutation and return its payload key, throwing on any GraphQL or user error.
+     */
+    protected function mutate(Request $request, string $operation, string $query, array $variables, string $resultKey): mixed
+    {
+        $response = StoreConfig::clientFor($this->customerStore($request))->query([
+            'query' => $query,
+            'variables' => $variables,
+        ]);
+
+        if ($message = $response->firstError($operation)) {
+            throw new \Exception($message);
+        }
+
+        if (! $result = Arr::get($response->getDecodedBody(), "data.{$operation}.{$resultKey}")) {
+            throw new \Exception(__('Shopify did not return a result'));
+        }
+
+        return $result;
+    }
+
     protected function withSuccess(Request $request, array $data = [])
     {
         if ($request->wantsJson()) {
