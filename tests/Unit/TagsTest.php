@@ -559,6 +559,41 @@ class TagsTest extends TestCase
     }
 
     #[Test]
+    public function outputs_an_orders_shipments_and_what_it_takes_to_buy_it_again()
+    {
+        $this->mock(Graphql::class, function (MockInterface $mock) {
+            $mock->shouldReceive('query')
+                ->withArgs(fn ($args) => str_contains($args['query'], 'fulfillments(first: 10)') && str_contains($args['query'], 'availableForSale') && str_contains($args['query'], 'sellingPlanId'))
+                ->andReturn(new HttpResponse(status: 200, body: json_encode(['data' => ['order' => [
+                    'id' => 'gid://shopify/Order/1001',
+                    'customer' => ['id' => 'gid://shopify/Customer/706405506930370000'],
+                    'name' => '#1001',
+                    'lineItems' => ['nodes' => [[
+                        'id' => 'gid://shopify/LineItem/9',
+                        'title' => 'Ring',
+                        'quantity' => 2,
+                        'variant' => ['id' => 'gid://shopify/ProductVariant/5', 'availableForSale' => true],
+                        'product' => ['handle' => 'ring'],
+                        'sellingPlan' => ['sellingPlanId' => 'gid://shopify/SellingPlan/7', 'name' => 'Monthly'],
+                        'customAttributes' => [],
+                    ]]],
+                    'fulfillments' => [[
+                        'displayStatus' => 'IN_TRANSIT',
+                        'createdAt' => '2026-11-25T13:44:49Z',
+                        'trackingInfo' => [['company' => 'Royal Mail', 'number' => 'AB123', 'url' => 'https://example.com/track/AB123']],
+                    ]],
+                ]]])));
+        });
+
+        $this->actingAs(tap(Facades\User::make()->email('test@test.com')->data(['shopify_id' => '706405506930370000']))->save());
+
+        $this->assertSame(
+            'IN_TRANSIT Royal Mail AB123 https://example.com/track/AB123|ring 5 yes Monthly',
+            $this->tag('{{ shopify:customer:order id="1001" }}{{ fulfillments }}{{ displayStatus }} {{ trackingInfo }}{{ company }} {{ number }} {{ url }}{{ /trackingInfo }}{{ /fulfillments }}|{{ lineItems:nodes }}{{ product:handle }} {{ variant:id | replace("gid://shopify/ProductVariant/", "") }} {{ variant:availableForSale ? "yes" : "no" }} {{ sellingPlan:name }}{{ /lineItems:nodes }}{{ /shopify:customer:order }}')
+        );
+    }
+
+    #[Test]
     public function outputs_customer_orders()
     {
         // NOTE: if you are looking at this the JSON isnt quite the response from Shopify

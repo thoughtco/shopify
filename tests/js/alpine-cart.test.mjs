@@ -196,3 +196,29 @@ test('applying a code without a cart creates one first', async () => {
     assert.match(requests[0].query, /cartCreate/);
     assert.deepEqual(requests[1].variables, { cartId: 'gid://shopify/Cart/1', discountCodes: ['SAVE10'] });
 });
+
+test('addItems adds order line items to the cart', async () => {
+    store.cartId = 'gid://shopify/Cart/1';
+    reset('cartLinesAdd', cartResponse());
+
+    const cart = await store.addItems([
+        { variant: { id: 'gid://shopify/ProductVariant/1' }, quantity: 2, sellingPlan: { sellingPlanId: 'gid://shopify/SellingPlan/9' }, customAttributes: [{ key: 'Engraving', value: 'AB' }] },
+        { variantId: 5 },
+        { variant: null, quantity: 1 },
+    ]);
+
+    assert.equal(cart.id, 'gid://shopify/Cart/1');
+    assert.equal(requests.length, 1);
+    assert.deepEqual(requests[0].variables.lines, [
+        { merchandiseId: 'gid://shopify/ProductVariant/1', quantity: 2, sellingPlanId: 'gid://shopify/SellingPlan/9', attributes: [{ key: 'Engraving', value: 'AB' }] },
+        { merchandiseId: 'gid://shopify/ProductVariant/5', quantity: 1 },
+    ]);
+    assert.equal(store.lineItems.length, 1);
+});
+
+test('addItems does nothing without lines', async () => {
+    reset('cartLinesAdd', cartResponse());
+
+    assert.equal(await store.addItems([{ variant: null }]), undefined);
+    assert.equal(requests.length, 0);
+});
