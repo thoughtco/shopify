@@ -50,6 +50,10 @@ class ServiceProvider extends AddonServiceProvider
         Events\UserSaved::class => [Listeners\UserSavedListener::class],
     ];
 
+    protected $modifiers = [
+        Modifiers\ShopifyMoney::class,
+    ];
+
     protected $routes = [
         'actions' => __DIR__.'/../routes/actions.php',
         'cp' => __DIR__.'/../routes/cp.php',

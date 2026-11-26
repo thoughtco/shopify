@@ -485,6 +485,80 @@ class TagsTest extends TestCase
     }
 
     #[Test]
+    public function customer_addresses_mark_the_default_and_include_country_and_province_codes()
+    {
+        $address = fn (int $id, string $city, string $country, string $code) => [
+            'id' => "gid://shopify/MailingAddress/{$id}?model_name=CustomerAddress",
+            'firstName' => 'Sam', 'lastName' => 'Shopper', 'company' => null,
+            'address1' => '1 High Street', 'address2' => null, 'city' => $city,
+            'province' => null, 'provinceCode' => null,
+            'country' => $country, 'countryCodeV2' => $code,
+            'zip' => 'X1', 'phone' => null, 'name' => 'Sam Shopper',
+        ];
+
+        $this->mock(Graphql::class, function (MockInterface $mock) use ($address) {
+            $mock->shouldReceive('query')
+                ->withArgs(fn ($args) => str_contains($args['query'], 'defaultAddress') && str_contains($args['query'], 'countryCodeV2'))
+                ->andReturn(new HttpResponse(status: 200, body: json_encode(['data' => ['customer' => [
+                    'defaultAddress' => ['id' => 'gid://shopify/MailingAddress/2?model_name=CustomerAddress'],
+                    'addresses' => [$address(1, 'Dublin', 'Ireland', 'IE'), $address(2, 'London', 'United Kingdom', 'GB')],
+                ]]])));
+        });
+
+        $this->actingAs(tap(Facades\User::make()->email('sam@example.com')->data(['shopify_id' => '1']))->save());
+
+        // the default address comes first
+        $this->assertSame(
+            '2 London GB default|1 Dublin IE |',
+            $this->tag('{{ shopify:customer:addresses }}{{ addresses }}{{ id }} {{ city }} {{ countryCode }} {{ default ?= "default" }}|{{ /addresses }}{{ /shopify:customer:addresses }}')
+        );
+    }
+
+    #[Test]
+    public function outputs_one_of_the_customers_orders()
+    {
+        $queried = [];
+
+        $this->mock(Graphql::class, function (MockInterface $mock) use (&$queried) {
+            $mock->shouldReceive('query')
+                ->andReturnUsing(function ($args) use (&$queried) {
+                    $queried[] = $args['variables']['id'];
+
+                    $customer = $args['variables']['id'] === 'gid://shopify/Order/1001' ? '706405506930370000' : '123';
+
+                    return new HttpResponse(status: 200, body: json_encode(['data' => ['order' => [
+                        'id' => $args['variables']['id'],
+                        'customer' => ['id' => "gid://shopify/Customer/{$customer}"],
+                        'name' => '#1001',
+                        'statusPageUrl' => 'https://example.com/status',
+                        'lineItems' => ['nodes' => [['id' => 'gid://shopify/LineItem/9', 'title' => 'Ring', 'quantity' => 2]]],
+                        'totalPriceSet' => ['presentmentMoney' => ['amount' => '20.0', 'currencyCode' => 'GBP']],
+                    ]]]));
+                });
+        });
+
+        $template = '{{ shopify:customer:order :id="order_id" }}{{ if not_found }}not found{{ else }}{{ id }} {{ name }} {{ lineItems:nodes }}{{ quantity }}x{{ title }} ({{ id }}){{ /lineItems:nodes }}{{ /if }}{{ /shopify:customer:order }}';
+
+        // guests never query Shopify
+        $this->assertSame('not found', $this->tag($template, ['order_id' => '1001']));
+        $this->assertSame([], $queried);
+
+        $this->actingAs(tap(Facades\User::make()->email('test@test.com')->data(['shopify_id' => '706405506930370000']))->save());
+
+        $this->assertSame('1001 #1001 2xRing (9)', $this->tag($template, ['order_id' => '1001']));
+        $this->assertSame('1001 #1001 2xRing (9)', $this->tag($template, ['order_id' => 'gid://shopify/Order/1001']));
+
+        // another customer's order
+        $this->assertSame('not found', $this->tag($template, ['order_id' => '1002']));
+
+        // not an order ID: never sent to Shopify
+        $queriedBefore = count($queried);
+        $this->assertSame('not found', $this->tag($template, ['order_id' => '1001 OR customer_id:1']));
+        $this->assertSame('not found', $this->tag($template, ['order_id' => '']));
+        $this->assertCount($queriedBefore, $queried);
+    }
+
+    #[Test]
     public function outputs_customer_orders()
     {
         // NOTE: if you are looking at this the JSON isnt quite the response from Shopify

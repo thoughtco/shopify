@@ -153,6 +153,14 @@ test('sets the buyer identity and delivery address', { skip: ! configured && 'no
 
     current = await cart.setDeliveryAddress(current.id, { firstName: 'Sam', lastName: 'Shopper', address1: '1 High Street', city: 'London', countryCode: 'GB', zip: 'N1 1AA' });
     assert.ok(current?.id, 'cartDeliveryAddressesReplace');
+
+    const addresses = async () => (await client.request('query ($id: ID!) { cart(id: $id) { delivery { addresses { id } } } }', { variables: { id: current.id } })).data.cart.delivery.addresses;
+    assert.equal((await addresses()).length, 1);
+
+    // null removes it (markets mode, when the customer has no address in the market's country)
+    current = await cart.setDeliveryAddress(current.id, null);
+    assert.ok(current?.id, 'cartDeliveryAddressesReplace with no addresses');
+    assert.deepEqual(await addresses(), []);
     assert.deepEqual(errors, []);
 });
 

@@ -65,7 +65,7 @@ class MultiStoreCustomersTest extends TestCase
 
     private function address(array $extra = []): array
     {
-        return ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'province' => 'e', 'zip' => 'f', 'country' => 'g'] + $extra;
+        return ['firstName' => 'a', 'lastName' => 'b', 'address1' => 'c', 'city' => 'd', 'zip' => 'f', 'countryCode' => 'GB'] + $extra;
     }
 
     #[Test]

@@ -83,6 +83,17 @@ test('updateFromResponse maps discounts, codes, gift cards and the subtotal', ()
     }]);
 });
 
+test('itemsTotal is the lines less their discounts, without the shipping in the cart’s total', () => {
+    const withShipping = cartResponse({ lineDiscount: '1.5', cartDiscount: '2.0' });
+    withShipping.cost.totalAmount = money('21.99'); // 20.00 - 3.50 + 5.49 shipping once there's a delivery address
+
+    store.updateFromResponse(withShipping);
+
+    assert.equal(store.itemsTotal, '£16.50');
+    assert.equal(store.itemsTotalAmount, 16.5);
+    assert.equal(store.subtotal, '£21.99');
+});
+
 test('order-level discounts are added to the line discounts', () => {
     store.updateFromResponse(cartResponse({ discountCodes: [{ code: 'ORDER10', applicable: true }], lineDiscount: '1.5', cartDiscount: '2.0' }));
 

@@ -44,6 +44,36 @@ class Money
     }
 
     /**
+     * An amount in a given currency (an order's total, say), formatted for the current
+     * site's locale with PHP's intl extension. Without intl, or a currency code, it falls
+     * back to the configured symbol when the code is the store's own, else "12.50 EUR".
+     */
+    public static function format($amount, ?string $currencyCode = null): string
+    {
+        if (! is_numeric($amount)) {
+            return '';
+        }
+
+        $currencyCode = $currencyCode ? strtoupper($currencyCode) : config('shopify.currency_code');
+
+        if ($currencyCode && class_exists(NumberFormatter::class)) {
+            $formatted = (new NumberFormatter(Site::current()->locale(), NumberFormatter::CURRENCY))->formatCurrency((float) $amount, $currencyCode);
+
+            if ($formatted !== false) {
+                return $formatted;
+            }
+        }
+
+        $number = number_format((float) $amount, 2);
+
+        if (! $currencyCode || $currencyCode === config('shopify.currency_code')) {
+            return config('shopify.currency', '$').$number;
+        }
+
+        return "{$number} {$currencyCode}";
+    }
+
+    /**
      * Split a price into the currency and amount parts used by the price messages
      * (`:currency:price`). With the 'intl' format the whole formatted price is in
      * `price` and `currency` is empty; otherwise this is the symbol and the raw price.

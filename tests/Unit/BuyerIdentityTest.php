@@ -136,6 +136,34 @@ class BuyerIdentityTest extends TestCase
     }
 
     #[Test]
+    public function picks_an_address_in_the_requested_country()
+    {
+        $dublin = ['id' => 'gid://shopify/MailingAddress/2', 'firstName' => 'Sam', 'lastName' => 'Shopper', 'address1' => '2 Quay Street', 'city' => 'Dublin', 'countryCodeV2' => 'IE', 'zip' => 'D02'];
+        $london = array_merge($this->customer()['defaultAddress'], ['id' => 'gid://shopify/MailingAddress/1']);
+
+        $this->mock(Graphql::class)->shouldReceive('query')
+            ->andReturn($this->customerResponse($this->customer([
+                'defaultAddress' => $london,
+                'addressesV2' => ['nodes' => [$london, $dublin]],
+            ])));
+
+        $this->actingAs($this->user(['shopify_id' => 123]));
+
+        // the default address when it's in that country, or none is asked for
+        $this->assertSame('London', $this->getJson('/!/shopify/buyer?country=GB')->json('deliveryAddress.city'));
+        $this->assertSame('London', $this->getJson('/!/shopify/buyer')->json('deliveryAddress.city'));
+
+        // otherwise their address in that country
+        $this->assertSame('Dublin', $this->getJson('/!/shopify/buyer?country=ie')->json('deliveryAddress.city'));
+        $this->assertArrayNotHasKey('id', $this->getJson('/!/shopify/buyer?country=IE')->json('deliveryAddress'));
+
+        // and none when they have no address there, so checkout stays in that market
+        $this->getJson('/!/shopify/buyer?country=US')
+            ->assertOk()
+            ->assertExactJson(['email' => 'sam@shopify.example.com', 'phone' => '+447700900000']);
+    }
+
+    #[Test]
     public function uses_the_customer_in_the_requested_store_on_a_multi_store_site()
     {
         config()->set('shopify.multi_store', [
