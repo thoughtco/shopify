@@ -138,6 +138,11 @@ class Shopify extends Tags
         displayFulfillmentStatus
         statusPageUrl
         name
+        metafields(namespace: "statamic_subscriptions", first: 10) {
+          nodes {
+            jsonValue
+          }
+        }
         fulfillments(first: 10) {
           displayStatus
           createdAt
@@ -912,6 +917,86 @@ class Shopify extends Tags
     }
 
     /**
+     * The logged in user's subscriptions, worked out from the orders that started them (those
+     * tagged with shopify.subscriptions.order_tag), newest first. Each has the selling plan, the
+     * lines on it, and the order; `id`, `status` and `nextBillingDate` come from the metafields
+     * the bundled Flow workflows write (null without them). `status="active|paused"` keeps those.
+     */
+    public function customerSubscriptions()
+    {
+        $empty = ['subscriptions' => [], 'subscriptions_count' => 0];
+
+        if (! $user = User::current()) {
+            return $empty;
+        }
+
+        [$customerId, $graphql] = $this->resolveCustomerGraphql($user, $this->params->get('store'));
+
+        if ($customerId === 'none') {
+            return $empty;
+        }
+
+        $tag = str_replace(['\\', '"'], ['\\\\', '\\"'], (string) config('shopify.subscriptions.order_tag', 'Subscription First Order'));
+        $orderFields = self::ORDER_FIELDS;
+
+        $query = <<<QUERY
+            query (\$search: String, \$cursor: String) {
+              orders(first: 50, after: \$cursor, sortKey: CREATED_AT, reverse: true, query: \$search) {
+                nodes {
+                  {$orderFields}
+                }
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+              }
+            }
+            QUERY;
+
+        $orders = [];
+        $cursor = null;
+
+        // a customer's subscriptions rarely span more than a few orders: stop at 250
+        do {
+            $data = $graphql->query([
+                'query' => $query,
+                'variables' => ['search' => "customer_id:{$customerId} tag:\"{$tag}\"", 'cursor' => $cursor],
+            ])->getDecodedBody() ?? [];
+
+            $orders = array_merge($orders, Arr::get($data, 'data.orders.nodes', []));
+            $cursor = Arr::get($data, 'data.orders.pageInfo.endCursor');
+        } while (Arr::get($data, 'data.orders.pageInfo.hasNextPage') && $cursor && count($orders) < 250);
+
+        $statuses = collect(explode('|', (string) $this->params->get('status')))
+            ->map(fn ($status) => strtoupper(trim($status)))
+            ->filter();
+
+        $subscriptions = collect($orders)
+            ->map(fn ($order) => $this->formatOrder($order))
+            ->flatMap(function ($order) {
+                $summary = Arr::except($order, ['lineItems']);
+
+                return collect(Arr::get($order, 'lineItems.nodes', []))
+                    ->filter(fn ($lineItem) => Arr::get($lineItem, 'sellingPlan.sellingPlanId'))
+                    ->groupBy(fn ($lineItem) => $lineItem['subscription']['id'] ?? 'plan:'.$lineItem['sellingPlan']['sellingPlanId'])
+                    ->map(fn ($lines) => [
+                        'id' => $lines->first()['subscription']['id'] ?? null,
+                        'status' => $lines->first()['subscription']['status'] ?? null,
+                        'nextBillingDate' => $lines->first()['subscription']['nextBillingDate'] ?? null,
+                        'sellingPlan' => $lines->first()['sellingPlan'],
+                        'lines' => $lines->values()->all(),
+                        'order' => $summary,
+                    ])
+                    ->values();
+            })
+            ->when($statuses->isNotEmpty(), fn ($subscriptions) => $subscriptions->filter(fn ($subscription) => $statuses->contains($subscription['status'])))
+            ->values()
+            ->all();
+
+        return ['subscriptions' => $subscriptions, 'subscriptions_count' => count($subscriptions)];
+    }
+
+    /**
      * One of the logged in user's orders, by its ID (`id="5551234567"`, or the order's GID),
      * with the same fields as customer:orders. If the order doesn't belong to the user's
      * Shopify customer, or doesn't exist, only `not_found` is set, so an ID from the URL
@@ -971,18 +1056,53 @@ class Shopify extends Tags
     {
         $order['id'] = (int) Str::afterLast($order['id'], '/');
 
+        // what the bundled Flow workflows wrote about this order's subscriptions, one metafield each
+        $subscriptions = collect(Arr::get($order, 'metafields.nodes', []))
+            ->pluck('jsonValue')
+            ->filter(fn ($subscription) => is_array($subscription) && ! empty($subscription['id']));
+
+        unset($order['metafields']);
+
         Arr::set(
             $order,
             'lineItems.nodes',
             collect(Arr::get($order, 'lineItems.nodes'))
-                ->map(function ($lineItem) {
+                ->map(function ($lineItem) use ($subscriptions) {
                     $lineItem['id'] = (int) Str::afterLast($lineItem['id'], '/');
+                    $lineItem['subscription'] = $this->lineItemSubscription($lineItem, $subscriptions);
 
                     return $lineItem;
                 })->all()
         );
 
         return $order;
+    }
+
+    /**
+     * The subscription a line item started, from the order's statamic_subscriptions metafields:
+     * the one with a line for the same variant on the same selling plan.
+     */
+    private function lineItemSubscription(array $lineItem, Collection $subscriptions): ?array
+    {
+        $variantId = Arr::get($lineItem, 'variant.id');
+        $sellingPlanId = Arr::get($lineItem, 'sellingPlan.sellingPlanId');
+
+        if (! $variantId || ! $sellingPlanId) {
+            return null;
+        }
+
+        $subscription = $subscriptions->first(fn ($subscription) => collect($subscription['lines'] ?? [])
+            ->contains(fn ($line) => ($line['variantId'] ?? null) === $variantId && ($line['sellingPlanId'] ?? null) === $sellingPlanId));
+
+        if (! $subscription) {
+            return null;
+        }
+
+        return [
+            'id' => (int) Str::afterLast($subscription['id'], '/'),
+            'status' => ($subscription['status'] ?? '') ?: null,
+            'nextBillingDate' => ($subscription['nextBillingDate'] ?? '') ?: null,
+        ];
     }
 
     private function countOrders($graphql, string $search): int
