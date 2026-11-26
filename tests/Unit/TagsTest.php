@@ -678,6 +678,36 @@ class TagsTest extends TestCase
     }
 
     #[Test]
+    public function outputs_the_customers_marketing_consent_and_a_form_to_change_it()
+    {
+        $this->mock(Graphql::class, function (MockInterface $mock) {
+            $mock->shouldReceive('query')
+                ->withArgs(fn ($args) => str_contains($args['query'], 'defaultEmailAddress'))
+                ->andReturn(new HttpResponse(status: 200, body: json_encode(['data' => ['customer' => [
+                    'email' => 'sam@example.com',
+                    'displayName' => 'Sam',
+                    'note' => null,
+                    'lastOrder' => null,
+                    'defaultEmailAddress' => ['marketingState' => 'SUBSCRIBED'],
+                    'defaultPhoneNumber' => ['phoneNumber' => '+447700900123', 'marketingState' => 'NOT_SUBSCRIBED'],
+                ]]])));
+        });
+
+        $this->actingAs(tap(Facades\User::make()->email('sam@example.com')->data(['shopify_id' => '1']))->save());
+
+        $this->assertSame(
+            'yes SUBSCRIBED|no NOT_SUBSCRIBED +447700900123',
+            $this->tag('{{ shopify:customer }}{{ accepts_email_marketing ? "yes" : "no" }} {{ email_marketing_state }}|{{ accepts_sms_marketing ? "yes" : "no" }} {{ sms_marketing_state }} {{ phone }}{{ /shopify:customer }}')
+        );
+
+        $form = $this->tag('{{ shopify:marketing_form redirect="/account" }}<input name="email">{{ /shopify:marketing_form }}');
+
+        $this->assertStringContainsString('action="'.route('statamic.shopify.marketing.update').'"', $form);
+        $this->assertStringContainsString('name="_redirect" value="/account"', $form);
+        $this->assertStringContainsString('<input name="email">', $form);
+    }
+
+    #[Test]
     public function outputs_customer_orders()
     {
         // NOTE: if you are looking at this the JSON isnt quite the response from Shopify

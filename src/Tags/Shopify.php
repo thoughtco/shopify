@@ -713,6 +713,43 @@ class Shopify extends Tags
      *
      * @return Collection|null
      */
+    /**
+     * A form to change the logged in user's email and SMS marketing consent in Shopify.
+     * Fields: `email` and `sms` (1 or 0; put a hidden 0 before each checkbox).
+     */
+    public function marketingForm()
+    {
+        $endpoint = route('statamic.shopify.marketing.update');
+        $knownParams = ['redirect', 'error_redirect', 'store'];
+
+        $params = [];
+
+        if ($redirect = $this->getRedirectUrl()) {
+            $params['redirect'] = $this->parseRedirect($redirect);
+        }
+
+        if ($errorRedirect = $this->getErrorRedirectUrl()) {
+            $params['error_redirect'] = $this->parseRedirect($errorRedirect);
+        }
+
+        // on multi-store sites, which store's customer to update
+        if ($store = Customers::store($this->params->get('store'))) {
+            $params['store'] = $store;
+        }
+
+        if (! $this->parser) {
+            return [
+                'attrs' => $this->formAttrs($endpoint, 'post', $knownParams),
+                'params' => $this->formMetaPrefix($this->formParams('post', $params)),
+            ];
+        }
+
+        return $this->formOpen($endpoint, 'POST', $knownParams)
+            .$this->formMetaFields($params)
+            .$this->parse()
+            .$this->formClose();
+    }
+
     public function customer()
     {
         $storeParam = $this->params->get('store');
@@ -736,6 +773,13 @@ class Shopify extends Tags
                 lastOrder {
                     id
                 }
+                defaultEmailAddress {
+                    marketingState
+                }
+                defaultPhoneNumber {
+                    phoneNumber
+                    marketingState
+                }
               }
             }
             QUERY;
@@ -750,6 +794,11 @@ class Shopify extends Tags
                 'name' => $customer['displayName'],
                 'last_order_id' => Arr::get($customer, 'lastOrder.id'),
                 'note' => $customer['note'],
+                'phone' => Arr::get($customer, 'defaultPhoneNumber.phoneNumber'),
+                'email_marketing_state' => $emailState = Arr::get($customer, 'defaultEmailAddress.marketingState'),
+                'accepts_email_marketing' => $emailState === 'SUBSCRIBED',
+                'sms_marketing_state' => $smsState = Arr::get($customer, 'defaultPhoneNumber.marketingState'),
+                'accepts_sms_marketing' => $smsState === 'SUBSCRIBED',
             ];
         }
 

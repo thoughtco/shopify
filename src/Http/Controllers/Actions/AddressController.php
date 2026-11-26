@@ -3,12 +3,9 @@
 namespace Thoughtco\Shopify\Http\Controllers\Actions;
 
 use Illuminate\Http\Request;
-use Statamic\Facades\User;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 use Thoughtco\Shopify\Http\Requests;
-use Thoughtco\Shopify\Support\Customers;
-use Thoughtco\Shopify\Support\StoreConfig;
 
 class AddressController extends BaseActionController
 {
@@ -52,7 +49,7 @@ class AddressController extends BaseActionController
                 'address' => $this->addressInput($request->validated()),
                 'customerId' => 'gid://shopify/Customer/'.$customerId,
                 'setAsDefault' => (bool) $request->validated('default', false),
-            ]);
+            ], 'address');
 
             return $this->withSuccess($request, [
                 'message' => __('Address created'),
@@ -119,7 +116,7 @@ class AddressController extends BaseActionController
                 'addressId' => $this->addressGid($id),
                 'customerId' => 'gid://shopify/Customer/'.$customerId,
                 'setAsDefault' => (bool) $request->validated('default', false),
-            ]);
+            ], 'address');
 
             return $this->withSuccess($request, [
                 'message' => __('Address updated'),
@@ -128,40 +125,6 @@ class AddressController extends BaseActionController
         } catch (\Exception $error) {
             return $this->withErrors($request, $error->getMessage());
         }
-    }
-
-    /**
-     * The logged in user's customer ID, in the store the form was for (`_store`) on multi-store sites.
-     */
-    private function customerId(Request $request): ?string
-    {
-        return ($user = User::current()) ? Customers::id($user, $this->customerStore($request)) : null;
-    }
-
-    private function customerStore(Request $request): ?string
-    {
-        return Customers::store($request->input('_store'));
-    }
-
-    /**
-     * Run a mutation and return its payload key, throwing on any GraphQL or user error.
-     */
-    private function mutate(Request $request, string $operation, string $query, array $variables, string $resultKey = 'address'): mixed
-    {
-        $response = StoreConfig::clientFor($this->customerStore($request))->query([
-            'query' => $query,
-            'variables' => $variables,
-        ]);
-
-        if ($message = $response->firstError($operation)) {
-            throw new \Exception($message);
-        }
-
-        if (! $result = Arr::get($response->getDecodedBody(), "data.{$operation}.{$resultKey}")) {
-            throw new \Exception(__('Shopify did not return a result'));
-        }
-
-        return $result;
     }
 
     /**
