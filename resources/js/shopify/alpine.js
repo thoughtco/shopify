@@ -90,6 +90,39 @@ const createStore = (Alpine) => {
         },
 
         /**
+         * Add several lines to the cart (creating it if needed), e.g. to buy an order again.
+         * Each line takes a `merchandiseId` or `variantId` (or a `variant` with an `id`, like
+         * an order's line items), numeric or a GID; `quantity` (default 1); a `sellingPlanId`
+         * (or `sellingPlan.sellingPlanId`); and `attributes` (or `customAttributes`).
+         * Returns the cart, or undefined if the lines couldn't be added.
+         */
+        async addItems(lines) {
+            const gid = (type, id) => id && ! String(id).startsWith('gid://') ? `gid://shopify/${type}/${id}` : id;
+
+            lines = (lines ?? []).map((line) => {
+                const merchandiseId = gid('ProductVariant', line.merchandiseId ?? line.variantId ?? line.variant?.id);
+                const sellingPlanId = gid('SellingPlan', line.sellingPlanId ?? line.sellingPlan?.sellingPlanId);
+                const attributes = (line.attributes ?? line.customAttributes ?? []).map(({ key, value }) => ({ key, value: value + '' }));
+
+                return {
+                    merchandiseId,
+                    quantity: parseInt(line.quantity ?? 1) || 1,
+                    ...(sellingPlanId ? { sellingPlanId } : {}),
+                    ...(attributes.length ? { attributes } : {}),
+                };
+            }).filter(line => line.merchandiseId);
+
+            if (! lines.length || ! await this.ensureCart()) {
+                return;
+            }
+
+            const cart = await addLines(this.cartId, lines);
+            this.updateFromResponse(cart);
+
+            return cart;
+        },
+
+        /**
          * Add a discount code, keeping the cart's other codes. A code that doesn't
          * apply to the cart is kept with applicable: false (see discountCodes).
          */

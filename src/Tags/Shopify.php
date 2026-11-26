@@ -64,6 +64,21 @@ class Shopify extends Tags
             image {
               url
             }
+            variant {
+              id
+              availableForSale
+            }
+            product {
+              handle
+            }
+            sellingPlan {
+              sellingPlanId
+              name
+            }
+            customAttributes {
+              key
+              value
+            }
             discountedUnitPriceSet {
               presentmentMoney {
                 currencyCode
@@ -123,6 +138,18 @@ class Shopify extends Tags
         displayFulfillmentStatus
         statusPageUrl
         name
+        fulfillments(first: 10) {
+          displayStatus
+          createdAt
+          inTransitAt
+          estimatedDeliveryAt
+          deliveredAt
+          trackingInfo(first: 5) {
+            company
+            number
+            url
+          }
+        }
         FIELDS;
 
     /**
