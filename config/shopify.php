@@ -206,6 +206,23 @@ return [
     'selling_plans' => env('SHOPIFY_SELLING_PLANS', false),
 
     /**
+     * Subscriptions in customer accounts. Shopify only lets the app that created a
+     * subscription read it, so the bundled Shopify Flow workflows (resources/flow) write
+     * each subscription's status onto its first order, and tag that order with
+     * order_tag. {{ shopify:customer:subscriptions }} reads the orders with this tag:
+     * change it if your subscription app tags first orders differently and you
+     * haven't imported the workflows.
+     */
+    'subscriptions' => [
+        'order_tag' => env('SHOPIFY_SUBSCRIPTION_ORDER_TAG', 'Subscription First Order'),
+
+        // Where customers manage their subscriptions (your subscription app's portal),
+        // output as each subscription's manage_url. {id} is replaced with the
+        // subscription's ID, for apps that link to a single subscription.
+        'manage_url' => env('SHOPIFY_SUBSCRIPTION_MANAGE_URL'),
+    ],
+
+    /**
      * The activity log records every webhook received and every import run (from
      * webhooks, the control panel or the command line), shown under Shopify > Activity.
      *

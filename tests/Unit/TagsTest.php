@@ -594,6 +594,90 @@ class TagsTest extends TestCase
     }
 
     #[Test]
+    public function outputs_the_customers_subscriptions_from_their_first_orders()
+    {
+        $searches = [];
+
+        $line = fn (int $id, string $title, int $variant, ?int $plan) => [
+            'id' => "gid://shopify/LineItem/{$id}",
+            'title' => $title,
+            'quantity' => 1,
+            'variant' => ['id' => "gid://shopify/ProductVariant/{$variant}", 'availableForSale' => true],
+            'sellingPlan' => $plan ? ['sellingPlanId' => "gid://shopify/SellingPlan/{$plan}", 'name' => "Plan {$plan}"] : null,
+        ];
+
+        $this->mock(Graphql::class, function (MockInterface $mock) use (&$searches, $line) {
+            $mock->shouldReceive('query')
+                ->andReturnUsing(function ($args) use (&$searches, $line) {
+                    $searches[] = $args['variables']['search'] ?? 'orders';
+
+                    return new HttpResponse(status: 200, body: json_encode(['data' => ['orders' => [
+                        'nodes' => [
+                            [
+                                'id' => 'gid://shopify/Order/2',
+                                'name' => '#1002',
+                                'lineItems' => ['nodes' => [$line(21, 'Socks', 5, 7), $line(22, 'Mug', 6, null), $line(23, 'Tea', 8, 9)]],
+                                // the Flow workflows wrote one subscription; the other has no metafield yet
+                                'metafields' => ['nodes' => [['jsonValue' => [
+                                    'id' => 'gid://shopify/SubscriptionContract/300',
+                                    'status' => 'PAUSED',
+                                    'nextBillingDate' => '2027-01-25T13:00:00Z',
+                                    'lines' => [['variantId' => 'gid://shopify/ProductVariant/5', 'sellingPlanId' => 'gid://shopify/SellingPlan/7']],
+                                ]]]],
+                            ],
+                            [
+                                'id' => 'gid://shopify/Order/1',
+                                'name' => '#1001',
+                                'lineItems' => ['nodes' => [$line(11, 'Coffee', 4, 7)]],
+                                'metafields' => ['nodes' => [['jsonValue' => [
+                                    'id' => 'gid://shopify/SubscriptionContract/100',
+                                    'status' => 'ACTIVE',
+                                    'nextBillingDate' => '2026-12-01T13:00:00Z',
+                                    'lines' => [['variantId' => 'gid://shopify/ProductVariant/4', 'sellingPlanId' => 'gid://shopify/SellingPlan/7']],
+                                ]]]],
+                            ],
+                        ],
+                        'pageInfo' => ['hasNextPage' => false, 'endCursor' => null],
+                    ]]]));
+                });
+        });
+
+        $template = '{{ shopify:customer:subscriptions }}{{ subscriptions_count }}:{{ subscriptions }} {{ id ?? "-" }} {{ status ?? "?" }} {{ sellingPlan:name }} {{ order:name }} {{ lines }}{{ title }}{{ /lines }}{{ /subscriptions }}{{ /shopify:customer:subscriptions }}';
+
+        // guests never query Shopify
+        $this->assertSame('0:', $this->tag($template));
+        $this->assertSame([], $searches);
+
+        $this->actingAs(tap(Facades\User::make()->email('test@test.com')->data(['shopify_id' => '706405506930370000']))->save());
+
+        $this->assertSame('3: 300 PAUSED Plan 7 #1002 Socks - ? Plan 9 #1002 Tea 100 ACTIVE Plan 7 #1001 Coffee', $this->tag($template));
+        $this->assertSame(['customer_id:706405506930370000 tag:"Subscription First Order"'], $searches);
+
+        $this->assertSame('1: 100', $this->tag('{{ shopify:customer:subscriptions status="active" }}{{ subscriptions_count }}:{{ subscriptions }} {{ id }}{{ /subscriptions }}{{ /shopify:customer:subscriptions }}'));
+
+        // where to manage them
+        $manage = '{{ shopify:customer:subscriptions }}{{ subscriptions }}{{ manage_url ?? "none" }}|{{ /subscriptions }}{{ /shopify:customer:subscriptions }}';
+        $this->assertSame('none|none|none|', $this->tag($manage));
+
+        config(['shopify.subscriptions.manage_url' => 'https://shopify.com/1/account/pages/abc']);
+        $this->assertSame('https://shopify.com/1/account/pages/abc|https://shopify.com/1/account/pages/abc|https://shopify.com/1/account/pages/abc|', $this->tag($manage));
+
+        config(['shopify.subscriptions.manage_url' => 'https://portal.example.com/subscriptions/{id}']);
+        $this->assertSame('https://portal.example.com/subscriptions/300|none|https://portal.example.com/subscriptions/100|', $this->tag($manage));
+
+        // the order tag can be changed, and is escaped in the search
+        config(['shopify.subscriptions.order_tag' => 'Sub "first"']);
+        $this->tag($template);
+        $this->assertSame('customer_id:706405506930370000 tag:"Sub \\"first\\""', end($searches));
+
+        // the subscription is on the order's line items too
+        $this->assertSame(
+            'PAUSED 2027-01-25T13:00:00Z|none',
+            $this->tag('{{ shopify:customer:orders }}{{ orders limit="1" }}{{ lineItems:nodes limit="2" }}{{ subscription:status ?? "none" }}{{ if subscription }} {{ subscription:nextBillingDate }}|{{ /if }}{{ /lineItems:nodes }}{{ /orders }}{{ /shopify:customer:orders }}')
+        );
+    }
+
+    #[Test]
     public function outputs_customer_orders()
     {
         // NOTE: if you are looking at this the JSON isnt quite the response from Shopify
